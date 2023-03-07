@@ -1,22 +1,67 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CardFactory : MonoBehaviour {
-    [SerializeField] GameObject baseCard;
+    public static CardFactory Instance {
+        get {
+            if (_instance == null) {
+                Instance = FindObjectOfType<CardFactory>().GetComponent<CardFactory>();
+            }
 
-    Dictionary<string, SO_Card> cardDic;
+            return _instance;
+        }
+        private set => _instance = value;
+    }
+    static CardFactory _instance;
+    
+    public GameObject a_baseCard;
+    public static GameObject baseCard;
+
+    public List<SO_Card> a_cardSOs = new List<SO_Card>();
+    public static List<SO_Card> cardSOs = new List<SO_Card>();
+
+    void Awake() {
+        baseCard = a_baseCard;
+        cardSOs = a_cardSOs;
+    }
 
     public GameObject CreateCard(string name, Vector3 spawnPos) {
-        SO_Card c = cardDic["name"];
+        return null;
+    }
 
-        foreach ((string key, SO_Card value) in cardDic) {
-            
+    public static GameObject CreateCardFromMaterials(List<string> materials) {
+        SO_Card cSO = LookupRecipe(materials);
+        if (cSO == null) { return null; }
+        
+        GameObject o = Instantiate(baseCard);
+        Card c = o.GetComponent<Card>();
+        c.cardData = cSO;
+
+        if (cSO is SO_Food fSO) {
+            Destroy(c);
+            Food f = o.AddComponent<Food>();
+            f.foodData = fSO;
+            print("I am food");
         }
-        
-        
-        if (c )adsfasdfdsaf
-        
-        GameObject o = Instantiate(baseCard, spawnPos, Quaternion.identity);
+
         return o;
+    }
+
+    public static SO_Card LookupRecipe(List<string> materials) {
+        string[] materialsArr = materials.OrderBy((x => x)).ToArray();
+        foreach (var cSO in cardSOs) {
+            if (cSO.recipe.materials.Length == 0) {
+                continue;
+            }
+            
+            if (materialsArr.SequenceEqual(cSO.recipe.materials.OrderBy(x => x))) {
+                print("craft matched: " + cSO.name);
+                return cSO;     // cannot return SO_Food...
+            }
+        }
+
+        return null;
     }
 }

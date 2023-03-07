@@ -1,12 +1,23 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public abstract class Card : MonoBehaviour {
-    [SerializeField] new string name;
-    [SerializeField] int value;
-    [SerializeField] Sprite image;
+public class Card : MonoBehaviour {
+    public SO_Card cardData;
 
-    public List<GameObject> nearestCards;
+    public new string name;
+    public int value;
+    public Sprite image;
+
+    public List<GameObject> nearestCards = new List<GameObject>();
+
+    [SerializeField] GameObject craftProgressBar;
+
+    bool isPickedUp;
+
+    public void Start() { Setup(cardData.name, cardData.value, cardData.image); }
 
     public void Setup(string name, int value, Sprite image) {
         this.name = name;
@@ -18,12 +29,14 @@ public abstract class Card : MonoBehaviour {
         // trigger crafting for stack left behind
         if (transform.parent != null) {
             Card c = transform.parent.GetComponent<Card>();
+            
+            transform.parent = null;    // Need to remove parent for Craft() to be accurate
+            
             if (c != null) {
-                c.Craft();
+                StartCoroutine(c.Craft());
             }
         }
 
-        transform.parent = null;
     }
 
     public void Fall() {
@@ -57,14 +70,41 @@ public abstract class Card : MonoBehaviour {
         transform.localPosition = new Vector3(0, 0.2f, 0.01f); // y = stack offset, z = height
 
         // Do crafting
-        Craft();
+        StartCoroutine(Craft());
     }
 
-    void Craft() {
+    IEnumerator Craft() {
+        print("creaft");
         List<string> cardNames = GetCardsNamesInStack();
-        Recipe r = RecipeList.LookupRecipe(cardNames);
-
+        SO_Card cSO = CardFactory.LookupRecipe(cardNames);
+        if (cSO == null) { yield break; }
         
+        yield return StartCoroutine(DoCraftTime(cSO.recipe.time, ret => {
+            GameObject cardObj = CardFactory.CreateCardFromMaterials(cardNames);
+            if (cardObj != null) {
+                cardObj.transform.position = transform.position + Vector3.right;
+            }
+        }));
+    }
+
+    IEnumerator DoCraftTime(float craftTime, System.Action<bool> callback) {
+        // TODO: If this slow, make this pooled
+        GameObject barObj = Instantiate(craftProgressBar, GameManager.WorldCanvas.gameObject.transform);
+        barObj.transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z - 0.75f);
+
+        Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
+        // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
+        while (craftProgressFill.fillAmount < 1 && transform.parent != null && transform.childCount == 0)
+        {
+            craftProgressFill.fillAmount += 1.0f / craftTime * Time.deltaTime;
+            yield return null;
+        }
+
+        if (craftProgressFill.fillAmount >= 1) {
+            callback(true);
+        }
+        
+        Destroy(barObj);
     }
 
     void OnTriggerEnter(Collider col) {
@@ -74,12 +114,15 @@ public abstract class Card : MonoBehaviour {
     }
 
     void OnTriggerExit(Collider col) {
-        if (col.gameObject.layer == gameObject.layer) {
+        if (col.gameObject.layer == gameObject.layer && nearestCards.Contains(col.gameObject)) {
             nearestCards.Remove(col.gameObject);
         }
     }
 
-// GetTopCardObj returns the highest (i.e. has cards under) card in the stack
+    void OnEnable() { GameManager.Instance.cards.Add(this); }
+    void OnDisable() { GameManager.Instance.cards.Remove(this); }
+
+    // GetTopCardObj returns the highest (i.e. has cards under) card in the stack
     GameObject GetTopCardObj() {
         Transform t = transform;
         while (t.childCount > 0) {
@@ -89,7 +132,7 @@ public abstract class Card : MonoBehaviour {
         return t.gameObject;
     }
 
-// GetCardsInStack returns all cards under this card
+    // GetCardsInStack returns all cards under this card
     List<Card> GetCardsInStack() {
         List<Card> cards = new List<Card> {this};
         Transform t = transform;
@@ -108,10 +151,9 @@ public abstract class Card : MonoBehaviour {
         return cards;
     }
 
-// GetCardsNamesInStack returns all cards' names under this card
     List<string> GetCardsNamesInStack() {
         List<string> cardNames = new List<string> {this.name};
-        Transform t = transform;
+        Transform t = GetTopCardObj().transform;
 
         while (t.parent != null) {
             Card c = t.parent.GetComponent<Card>();
