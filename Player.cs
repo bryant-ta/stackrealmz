@@ -53,7 +53,7 @@ public class Player : MonoBehaviour {
 
     void DropCard(Card c) {
         if (heldCard != null) {
-            heldCard.Fall();
+            heldCard.Drop();
         }
         heldCard = null;
     }

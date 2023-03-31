@@ -30,16 +30,19 @@ public class Card : MonoBehaviour {
         if (transform.parent != null) {
             Card c = transform.parent.GetComponent<Card>();
             
-            transform.parent = null;    // Need to remove parent for Craft() to be accurate
+            transform.parent = null;    // Need to remove parent for Craft() and SetStackIsPickedUp() to be accurate
             
             if (c != null) {
                 StartCoroutine(c.Craft());
             }
         }
 
+        SetStackIsPickedUp(true);
     }
 
-    public void Fall() {
+    public void Drop() {
+        SetStackIsPickedUp(false);
+        
         if (nearestCards.Count == 0) {
             transform.position = new Vector3(transform.position.x, 0, transform.position.z);
             return;
@@ -74,37 +77,44 @@ public class Card : MonoBehaviour {
     }
 
     IEnumerator Craft() {
-        print("creaft");
         List<string> cardNames = GetCardsNamesInStack();
         SO_Card cSO = CardFactory.LookupRecipe(cardNames);
         if (cSO == null) { yield break; }
-        
-        yield return StartCoroutine(DoCraftTime(cSO.recipe.time, ret => {
-            GameObject cardObj = CardFactory.CreateCardFromMaterials(cardNames);
+
+        int craftFinished = 0;
+        // Delegate shortened syntax for returning a value from coroutine
+        yield return StartCoroutine(DoCraftTime(cSO.recipe.time, (res) => {
+            craftFinished = res;
+        }));
+
+        if (craftFinished == 1 && !isPickedUp) {
+            GameObject cardObj = CardFactory.CreateCard(cSO);
             if (cardObj != null) {
                 cardObj.transform.position = transform.position + Vector3.right;
             }
-        }));
+        }
     }
 
-    IEnumerator DoCraftTime(float craftTime, System.Action<bool> callback) {
+    IEnumerator DoCraftTime(float craftTime, System.Action<int> onCraftFinished) {
         // TODO: If this slow, make this pooled
         GameObject barObj = Instantiate(craftProgressBar, GameManager.WorldCanvas.gameObject.transform);
         barObj.transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z - 0.75f);
 
         Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
         // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
-        while (craftProgressFill.fillAmount < 1 && transform.parent != null && transform.childCount == 0)
+        while (craftProgressFill.fillAmount < 1 && !isPickedUp && transform.childCount == 0)
         {
             craftProgressFill.fillAmount += 1.0f / craftTime * Time.deltaTime;
             yield return null;
         }
-
-        if (craftProgressFill.fillAmount >= 1) {
-            callback(true);
-        }
         
         Destroy(barObj);
+        
+        if (craftProgressFill.fillAmount >= 1) {
+            onCraftFinished(1);
+            yield break;            // Above line runs delegate function, setting craftFinished. Then return immediately
+        }
+        onCraftFinished(0);
     }
 
     void OnTriggerEnter(Collider col) {
@@ -132,13 +142,12 @@ public class Card : MonoBehaviour {
         return t.gameObject;
     }
 
-    // GetCardsInStack returns all cards under this card
     List<Card> GetCardsInStack() {
-        List<Card> cards = new List<Card> {this};
-        Transform t = transform;
-
-        while (t.parent != null) {
-            Card c = t.parent.GetComponent<Card>();
+        List<Card> cards = new List<Card>();
+        
+        Transform t = GetTopCardObj().transform;
+        while (t != null) {
+            Card c = t.GetComponent<Card>();
             if (c != null) {
                 cards.Add(c);
             } else {
@@ -152,11 +161,11 @@ public class Card : MonoBehaviour {
     }
 
     List<string> GetCardsNamesInStack() {
-        List<string> cardNames = new List<string> {this.name};
+        List<string> cardNames = new List<string>();
+        
         Transform t = GetTopCardObj().transform;
-
-        while (t.parent != null) {
-            Card c = t.parent.GetComponent<Card>();
+        while (t != null) {
+            Card c = t.GetComponent<Card>();
             if (c != null) {
                 cardNames.Add(c.name);
             } else {
@@ -167,5 +176,11 @@ public class Card : MonoBehaviour {
         }
 
         return cardNames;
+    }
+
+    void SetStackIsPickedUp(bool status) {
+        foreach (var c in GetCardsInStack()) {
+            c.isPickedUp = status;
+        }
     }
 }

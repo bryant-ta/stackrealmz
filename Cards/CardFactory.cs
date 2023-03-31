@@ -27,14 +27,14 @@ public class CardFactory : MonoBehaviour {
         cardSOs = a_cardSOs;
     }
 
-    public GameObject CreateCard(string name, Vector3 spawnPos) {
-        return null;
-    }
-
     public static GameObject CreateCardFromMaterials(List<string> materials) {
         SO_Card cSO = LookupRecipe(materials);
         if (cSO == null) { return null; }
-        
+
+        return CreateCard(cSO);
+    }
+
+    public static GameObject CreateCard(SO_Card cSO) {
         GameObject o = Instantiate(baseCard);
         Card c = o.GetComponent<Card>();
         c.cardData = cSO;
