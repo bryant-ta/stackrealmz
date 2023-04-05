@@ -92,6 +92,10 @@ public class Card : MonoBehaviour {
             if (cardObj != null) {
                 cardObj.transform.position = transform.position + Vector3.right;
             }
+
+            foreach (Card c in GetCardsInStack()) {
+                Destroy(c.gameObject);
+            }
         }
     }
 
@@ -141,7 +145,6 @@ public class Card : MonoBehaviour {
 
         return t.gameObject;
     }
-
     List<Card> GetCardsInStack() {
         List<Card> cards = new List<Card>();
         
@@ -159,7 +162,6 @@ public class Card : MonoBehaviour {
 
         return cards;
     }
-
     List<string> GetCardsNamesInStack() {
         List<string> cardNames = new List<string>();
         

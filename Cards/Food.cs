@@ -10,6 +10,14 @@ public class Food : Card {
         saturation = foodData.saturation;
     }
 
+    public void Eat() {
+        saturation -= 1;
+        if (saturation == 0) {
+            Pickup();
+            Destroy(gameObject, 0.05f);
+        }
+    }
+
     void OnEnable() { GameManager.Instance.foods.Add(this); }
     void OnDisable() { GameManager.Instance.foods.Remove(this); }
 }

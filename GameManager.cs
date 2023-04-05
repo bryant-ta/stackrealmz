@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // GameManager singleton handles day cycle
 // Requires GameManager to have priority in script load order (otherwise _instance might not be set when used)
@@ -12,7 +13,12 @@ public class GameManager : MonoBehaviour {
     [SerializeField] Canvas _worldCanvas;
 
     public List<Card> cards;
-    public List<Card> foods;
+    public List<Food> foods;
+    public List<Villager> villagers;
+
+    // Day Vars
+    public int dayDuration = 1;
+    public Image dayProgressFill;
 
     void Awake() 
     { 
@@ -26,11 +32,28 @@ public class GameManager : MonoBehaviour {
         }
 
         WorldCanvas = _worldCanvas;
+
+        StartCoroutine(DayCycle());
     }
 
     IEnumerator DayCycle() {
         while (true) {
-            // timer here
+            while (dayProgressFill.fillAmount < 1) {
+                dayProgressFill.fillAmount += 1.0f / dayDuration * Time.deltaTime;
+                yield return null;
+            }
+
+            dayProgressFill.fillAmount = 0f;
+            
+            foreach (Villager v in villagers) {
+                if (foods.Count == 0) {
+                    // TODO: You lost function
+                    print("YOU LOST");
+                    break;
+                }
+
+                foods[0].Eat();
+            }
         }
     }
 }

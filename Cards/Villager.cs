@@ -11,4 +11,7 @@ public class Villager : Card {
         Setup(villagerData.name, villagerData.value, villagerData.image);
         consumption = villagerData.consumption;
     }
+    
+    void OnEnable() { GameManager.Instance.villagers.Add(this); }
+    void OnDisable() { GameManager.Instance.villagers.Remove(this); }
 }

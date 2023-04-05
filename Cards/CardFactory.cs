@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -43,7 +42,10 @@ public class CardFactory : MonoBehaviour {
             Destroy(c);
             Food f = o.AddComponent<Food>();
             f.foodData = fSO;
-            print("I am food");
+        } else if (cSO is SO_Villager vSO) {
+            Destroy(c);
+            Villager f = o.AddComponent<Villager>();
+            f.villagerData = vSO;
         }
 
         return o;
