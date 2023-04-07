@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class Food : Card {
     public SO_Food foodData;
 
@@ -13,7 +11,9 @@ public class Food : Card {
     public void Eat() {
         saturation -= 1;
         if (saturation == 0) {
-            Pickup();
+            if (TryGetComponent(out Moveable moveable)) {
+                moveable.Pickup();
+            }
             Destroy(gameObject, 0.05f);
         }
     }

@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour {
     // Day Vars
     public int dayDuration = 1;
     public Image dayProgressFill;
+    
+    //Debug
+    public bool doDay;
 
     void Awake() 
     { 
@@ -33,8 +36,11 @@ public class GameManager : MonoBehaviour {
 
         WorldCanvas = _worldCanvas;
 
-        StartCoroutine(DayCycle());
+        if (doDay) {
+            StartCoroutine(DayCycle());
+        }
     }
+    
 
     IEnumerator DayCycle() {
         while (true) {

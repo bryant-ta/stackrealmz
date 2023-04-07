@@ -42,10 +42,17 @@ public class CardFactory : MonoBehaviour {
             Destroy(c);
             Food f = o.AddComponent<Food>();
             f.foodData = fSO;
+            o.GetComponent<Moveable>().mCard = f;
         } else if (cSO is SO_Villager vSO) {
             Destroy(c);
-            Villager f = o.AddComponent<Villager>();
-            f.villagerData = vSO;
+            Villager v = o.AddComponent<Villager>();
+            v.villagerData = vSO;
+            o.GetComponent<Moveable>().mCard = v;
+        } else if (cSO is SO_CardPack cpSO) {
+            Destroy(c);
+            CardPack cp = o.AddComponent<CardPack>();
+            cp.cardPackData = cpSO;
+            o.GetComponent<Moveable>().mCard = cp;
         }
 
         return o;

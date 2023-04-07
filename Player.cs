@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour {
     public float dragSpeed;
     
-    public Card heldCard;
+    public Moveable heldCard;
 
     [SerializeField] LayerMask dragLayer;
     [SerializeField] LayerMask cardLayer;
@@ -15,9 +15,20 @@ public class Player : MonoBehaviour {
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
             if (hit.collider != null) {
-                Card c = hit.collider.gameObject.GetComponent<Card>();
-                if (c != null) {
-                    HoldCard(c);
+                if (hit.collider.gameObject.TryGetComponent(out Moveable moveable)) {
+                    HoldCard(moveable);
+                }
+            }
+        }
+    }
+    
+    void OnSecondaryDown() {
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
+            if (hit.collider != null) {
+                if (hit.collider.gameObject.TryGetComponent(out CardPack cardPack)) {
+                    cardPack.Open();
                 }
             }
         }
@@ -27,7 +38,7 @@ public class Player : MonoBehaviour {
         DropCard(heldCard);
     }
 
-    void HoldCard(Card c) {
+    void HoldCard(Moveable c) {
         heldCard = c;
         heldCard.Pickup();
         StartCoroutine(FollowMouse());
@@ -47,11 +58,10 @@ public class Player : MonoBehaviour {
             yield return null;
         }
 
-
         yield return null;
     }
 
-    void DropCard(Card c) {
+    void DropCard(Moveable c) {
         if (heldCard != null) {
             heldCard.Drop();
         }
