@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Cards/CardPack")]
 public class SO_CardPack : SO_Card {
     public int numCards;
-    public List<Drop> lootTable;
+    public List<Drop> dropTable;
 }
 
 [System.Serializable]

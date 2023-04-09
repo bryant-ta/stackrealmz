@@ -8,22 +8,21 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Card))]
 public class Moveable : MonoBehaviour {
     public bool isStackable = true;
+    public float dropSpeed = 1;
     public List<GameObject> nearestCards = new List<GameObject>();
-    
+
     [SerializeField] GameObject craftProgressBar;
     bool isPickedUp;
-    public Card mCard;  // public for CardFactory to reset correctly after destroying Card
+    public Card mCard; // public for CardFactory to reset correctly after destroying Card
 
-    void Awake() {
-        mCard = GetComponent<Card>();
-    }
+    void Awake() { mCard = GetComponent<Card>(); }
 
     public void Pickup() {
         // trigger crafting for stack left behind
         if (transform.parent != null) {
             GameObject parent = transform.parent.gameObject;
-            transform.parent = null;    // Need to remove parent for Craft() and SetStackIsPickedUp() to be accurate
-            
+            transform.parent = null; // Need to remove parent for Craft() and SetStackIsPickedUp() to be accurate
+
             if (parent.TryGetComponent(out Moveable moveable)) {
                 StartCoroutine(moveable.Craft());
             }
@@ -34,58 +33,79 @@ public class Moveable : MonoBehaviour {
 
     public void Drop() {
         SetStackIsPickedUp(false);
-        
-        if (nearestCards.Count == 0) {
-            transform.position = new Vector3(transform.position.x, 0, transform.position.z);
-            return;
-        }
 
         // Snap to nearest Card
         float distance = int.MaxValue;
         Transform snapTrans = null;
         GameObject topCard = mCard.GetTopCardObj();
 
-        foreach (GameObject card in nearestCards) {
-            float d = Vector3.Distance(transform.position, card.transform.position);
-            // Exclude every card not at the bottom of a stack, and exclude our stack's bottom card
-            // This subset gives all valid cards to stack on
-            if (card.transform.childCount == 0 && card != topCard && d < distance) {
-                distance = d;
-                snapTrans = card.transform;
+        if (isStackable) {
+            foreach (GameObject card in nearestCards) {
+                float d = Vector3.Distance(transform.position, card.transform.position);
+                // Exclude every card not at the bottom of a stack, and exclude our stack's bottom card
+                // This subset gives all valid cards to stack on
+                if (card.transform.childCount == 0 && card != topCard && d < distance) {
+                    distance = d;
+                    snapTrans = card.transform;
+                }
             }
         }
 
-        if (!snapTrans) {
-            transform.position = new Vector3(transform.position.x, 0, transform.position.z);
-            return;
+        if (snapTrans) {
+            transform.SetParent(snapTrans);
+            // transform.localPosition = new Vector3(0, 0.2f, 0.01f); // y = stack offset, z = height
+            StartCoroutine(FallTo(new Vector3(0, 0.2f, 0.01f)));
+        } else {
+            // transform.position = Vector3.Lerp(transform.position, new Vector3(transform.position.x, 0, transform.position.z), dropSpeed * Time.deltaTime);
+            StartCoroutine(FallTo(new Vector3(transform.position.x, 0, transform.position.z)));
         }
 
-        // Do stacking
+        // Do crafting
         if (isStackable) {
-            transform.SetParent(snapTrans);
-            transform.localPosition = new Vector3(0, 0.2f, 0.01f); // y = stack offset, z = height
-
-            // Do crafting
             Moveable topCardOfStack = mCard.GetTopCardObj().GetComponent<Moveable>();
             StartCoroutine(topCardOfStack.Craft());
         }
     }
-    
+
+    IEnumerator FallTo(Vector3 endPoint) {
+        Vector3 startPos = transform.localPosition;
+        float t = 0f;
+        while (t < 1 && !isPickedUp) {
+            t += dropSpeed * Time.deltaTime;
+            transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
+            yield return null;
+        }
+    }
+
     IEnumerator Craft() {
         List<string> cardNames = mCard.GetCardsNamesInStack();
-        SO_Card cSO = CardFactory.LookupRecipe(cardNames);
-        if (cSO == null) { yield break; }
+        Recipe validRecipe = CardFactory.LookupRecipe(cardNames);
+        if (validRecipe == null) { yield break; }
 
         int craftFinished = 0;
         // Delegate shortened syntax for returning a value from coroutine
-        yield return StartCoroutine(DoCraftTime(cSO.recipe.craftTime, (res) => {
+        yield return StartCoroutine(DoCraftTime(validRecipe.craftTime, (res) => {
             craftFinished = res;
         }));
 
         if (craftFinished == 1 && !isPickedUp) {
-            GameObject cardObj = CardFactory.CreateCard(cSO);
-            if (cardObj != null) {
-                cardObj.transform.position = transform.position + Vector3.right;
+            if (validRecipe.dropTable.Count > 0) {
+                for (int i = 0; i < validRecipe.numDrops; i++) {
+                    SO_Card cSO = CardFactory.RollDrop(validRecipe.dropTable);
+                    if (cSO == null) {
+                        continue;
+                    }
+
+                    GameObject cardObj = CardFactory.CreateCard(cSO);
+                    cardObj.transform.position = Utils.GenerateCircleVector(i, validRecipe.products.Length,
+                        Constants.CardCreationRadius, transform.position);
+                }
+            } else {
+                for (int i = 0; i < validRecipe.products.Length; i++) {
+                    GameObject cardObj = CardFactory.CreateCard(validRecipe.products[i]);
+                    cardObj.transform.position = Utils.GenerateCircleVector(i, validRecipe.products.Length,
+                        Constants.CardCreationRadius, transform.position);
+                }
             }
 
             // TODO: convert to event
@@ -95,25 +115,26 @@ public class Moveable : MonoBehaviour {
         }
     }
 
-    IEnumerator DoCraftTime(float craftTime, System.Action<int> onCraftFinished) {
+    IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
         // TODO: If this slow, make this pooled
         GameObject barObj = Instantiate(craftProgressBar, GameManager.WorldCanvas.gameObject.transform);
-        barObj.transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z - 0.75f);
+        barObj.transform.position =
+            new Vector3(transform.parent.position.x, 0, transform.parent.position.z - 1f);
 
         Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
         // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
-        while (craftProgressFill.fillAmount < 1 && !isPickedUp && transform.childCount == 0)
-        {
-            craftProgressFill.fillAmount += 1.0f / craftTime * Time.deltaTime;
+        while (craftProgressFill.fillAmount < 1 && !isPickedUp && transform.childCount == 0) {
+            craftProgressFill.fillAmount += (float) GameManager.TimeSpeed / craftTime * Time.deltaTime;
             yield return null;
         }
-        
+
         Destroy(barObj);
-        
+
         if (craftProgressFill.fillAmount >= 1) {
             onCraftFinished(1);
-            yield break;            // Above line runs delegate function, setting craftFinished. Then return immediately
+            yield break; // Above line runs delegate function, setting craftFinished. Then return immediately
         }
+
         onCraftFinished(0);
     }
 
@@ -122,12 +143,13 @@ public class Moveable : MonoBehaviour {
             nearestCards.Add(col.gameObject);
         }
     }
+
     void OnTriggerExit(Collider col) {
         if (col.gameObject.layer == gameObject.layer && nearestCards.Contains(col.gameObject)) {
             nearestCards.Remove(col.gameObject);
         }
     }
-    
+
     void SetStackIsPickedUp(bool status) {
         foreach (var moveable in mCard.GetComponentsInStack<Moveable>()) {
             moveable.isPickedUp = status;

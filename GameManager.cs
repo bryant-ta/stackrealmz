@@ -20,6 +20,9 @@ public class GameManager : MonoBehaviour {
     public int dayDuration = 1;
     public Image dayProgressFill;
     
+    // Time Vars
+    public static int TimeSpeed = 1;
+    
     //Debug
     public bool doDay;
 
@@ -41,11 +44,10 @@ public class GameManager : MonoBehaviour {
         }
     }
     
-
     IEnumerator DayCycle() {
         while (true) {
             while (dayProgressFill.fillAmount < 1) {
-                dayProgressFill.fillAmount += 1.0f / dayDuration * Time.deltaTime;
+                dayProgressFill.fillAmount += (float)TimeSpeed / dayDuration * Time.deltaTime;
                 yield return null;
             }
 
@@ -60,6 +62,12 @@ public class GameManager : MonoBehaviour {
 
                 foods[0].Eat();
             }
+        }
+    }
+
+    public static void SetTimeSpeed(int n) {
+        if (n >= 0) {
+            TimeSpeed = n;
         }
     }
 }

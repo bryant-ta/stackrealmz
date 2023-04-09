@@ -57,8 +57,6 @@ public class Player : MonoBehaviour {
             }
             yield return null;
         }
-
-        yield return null;
     }
 
     void DropCard(Moveable c) {

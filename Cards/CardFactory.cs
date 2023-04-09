@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class CardFactory : MonoBehaviour {
     public static CardFactory Instance {
@@ -15,26 +17,19 @@ public class CardFactory : MonoBehaviour {
     }
     static CardFactory _instance;
     
-    public GameObject a_baseCard;
-    public static GameObject baseCard;
+    public GameObject baseCard;
+    public static GameObject _baseCard;
 
-    public List<SO_Card> a_cardSOs = new List<SO_Card>();
-    public static List<SO_Card> cardSOs = new List<SO_Card>();
+    public Recipe[] recipes;
+    public static Recipe[] _recipes;
 
     void Awake() {
-        baseCard = a_baseCard;
-        cardSOs = a_cardSOs;
-    }
-
-    public static GameObject CreateCardFromMaterials(List<string> materials) {
-        SO_Card cSO = LookupRecipe(materials);
-        if (cSO == null) { return null; }
-
-        return CreateCard(cSO);
+        _baseCard = baseCard;
+        _recipes = recipes;
     }
 
     public static GameObject CreateCard(SO_Card cSO) {
-        GameObject o = Instantiate(baseCard);
+        GameObject o = Instantiate(_baseCard);
         Card c = o.GetComponent<Card>();
         c.cardData = cSO;
 
@@ -58,19 +53,67 @@ public class CardFactory : MonoBehaviour {
         return o;
     }
 
-    public static SO_Card LookupRecipe(List<string> materials) {
+    public static Recipe LookupRecipe(List<string> materials) {
         string[] materialsArr = materials.OrderBy((x => x)).ToArray();
-        foreach (var cSO in cardSOs) {
-            if (cSO.recipe.materials.Length == 0) {
-                continue;
-            }
-            
-            if (materialsArr.SequenceEqual(cSO.recipe.materials.OrderBy(x => x))) {
-                print("craft matched: " + cSO.name);
-                return cSO;     // cannot return SO_Food...
+        foreach (Recipe r in _recipes) {
+            if (materialsArr.SequenceEqual(r.materials.OrderBy(x => x))) {
+                return r;
             }
         }
 
         return null;
     }
+    
+    public static SO_Card RollDrop(List<Drop> dropTable) {
+        // Roll eligible drops
+        int roll = Random.Range(1, 101);
+        List<Drop> possibleDrops = new List<Drop>();
+        foreach (Drop drop in dropTable) {
+            if (roll <= drop.percentage) {
+                possibleDrops.Add(drop);
+            }
+        }
+
+        // Choose most rare drop
+        if (possibleDrops.Count > 0) {
+            Drop ret = possibleDrops[0];
+            List<Drop> tiedDrops = new List<Drop>();
+            for (int i = 1; i < possibleDrops.Count; i++) {
+                if (possibleDrops[i].percentage == ret.percentage) {
+                    tiedDrops.Add(possibleDrops[i]);
+                }
+
+                if (possibleDrops[i].percentage < ret.percentage) {
+                    ret = possibleDrops[i];
+                    tiedDrops.Clear();
+                    tiedDrops.Add(ret);
+                }
+            }
+
+            // Randomly choose drops with tied drop chance
+            if (tiedDrops.Count > 1) {
+                ret = tiedDrops[Random.Range(0, tiedDrops.Count)];
+            }
+
+            return ret.cSO;
+        }
+
+        // Did not roll any drops
+        return null;
+    }
 }
+
+// TODO: JSON recipe list import, possibly then able to better separate RandomizedRecipe
+[Serializable]
+public class Recipe {
+    public string[] materials;
+    public SO_Card[] products;
+    public int craftTime;
+    public List<Drop> dropTable;    // here until JSON recipe import
+    public int numDrops;
+}
+
+// [Serializable]
+// public class RandomizedRecipe : Recipe {
+//     public List<Drop> dropTable;
+// }
