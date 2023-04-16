@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour {
     public static int TimeSpeed = 1;
     
     //Debug
-    public bool doDay;
+    public bool doEating;
 
     void Awake() 
     { 
@@ -38,10 +38,7 @@ public class GameManager : MonoBehaviour {
         }
 
         WorldCanvas = _worldCanvas;
-
-        if (doDay) {
-            StartCoroutine(DayCycle());
-        }
+        StartCoroutine(DayCycle());
     }
     
     IEnumerator DayCycle() {
@@ -52,15 +49,17 @@ public class GameManager : MonoBehaviour {
             }
 
             dayProgressFill.fillAmount = 0f;
-            
-            foreach (Villager v in villagers) {
-                if (foods.Count == 0) {
-                    // TODO: You lost function
-                    print("YOU LOST");
-                    break;
-                }
 
-                foods[0].Eat();
+            if (doEating) {
+                foreach (Villager v in villagers) {
+                    if (foods.Count == 0) {
+                        // TODO: You lost function
+                        print("YOU LOST");
+                        break;
+                    }
+
+                    foods[0].Eat();
+                }
             }
         }
     }

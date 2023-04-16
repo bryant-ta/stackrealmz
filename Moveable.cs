@@ -42,9 +42,10 @@ public class Moveable : MonoBehaviour {
         if (isStackable) {
             foreach (GameObject card in nearestCards) {
                 float d = Vector3.Distance(transform.position, card.transform.position);
-                // Exclude every card not at the bottom of a stack, and exclude our stack's bottom card
+                // Exclude every card not at the top of a stack, and exclude our stack's top card
                 // This subset gives all valid cards to stack on
-                if (card.transform.childCount == 0 && card != topCard && d < distance) {
+                if (card != topCard && (card.transform.childCount == 0 && card.GetComponentInChildren<Moveable>()) && d < distance) {
+                    
                     distance = d;
                     snapTrans = card.transform;
                 }
@@ -53,10 +54,8 @@ public class Moveable : MonoBehaviour {
 
         if (snapTrans) {
             transform.SetParent(snapTrans);
-            // transform.localPosition = new Vector3(0, 0.2f, 0.01f); // y = stack offset, z = height
-            StartCoroutine(FallTo(new Vector3(0, 0.2f, 0.01f)));
+            StartCoroutine(FallTo(new Vector3(0, -0.2f, -0.01f)));  // y = stack offset, z = height
         } else {
-            // transform.position = Vector3.Lerp(transform.position, new Vector3(transform.position.x, 0, transform.position.z), dropSpeed * Time.deltaTime);
             StartCoroutine(FallTo(new Vector3(transform.position.x, 0, transform.position.z)));
         }
 
@@ -118,12 +117,13 @@ public class Moveable : MonoBehaviour {
     IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
         // TODO: If this slow, make this pooled
         GameObject barObj = Instantiate(craftProgressBar, GameManager.WorldCanvas.gameObject.transform);
+        // TODO: Bug where crafting bar doesnt move to correct spot when crafting holding a stack (parent is in the currently held stack)
         barObj.transform.position =
             new Vector3(transform.parent.position.x, 0, transform.parent.position.z - 1f);
 
         Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
         // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
-        while (craftProgressFill.fillAmount < 1 && !isPickedUp && transform.childCount == 0) {
+        while (craftProgressFill.fillAmount < 1 && !isPickedUp && (transform.childCount == 0 && GetComponentInChildren<Moveable>())) {
             craftProgressFill.fillAmount += (float) GameManager.TimeSpeed / craftTime * Time.deltaTime;
             yield return null;
         }

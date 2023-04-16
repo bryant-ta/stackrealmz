@@ -22,7 +22,7 @@ public class Card : MonoBehaviour {
     // GetTopCardObj returns the highest (i.e. has cards under) card in the stack
     public GameObject GetTopCardObj() {
         Transform t = transform;
-        while (t.childCount > 0) {
+        while (t.childCount > 0 && t.GetComponentInChildren<Moveable>()) {
             t = t.GetChild(0);
         }
 
