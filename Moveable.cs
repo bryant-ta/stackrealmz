@@ -61,17 +61,15 @@ public class Moveable : MonoBehaviour {
                 GameObject newStackObj = new GameObject("Stack");
                 newStackObj.transform.position = snapTrans.position;
                 newStackObj.transform.rotation = snapTrans.rotation;
+                
                 Stack newStack = newStackObj.AddComponent<Stack>();
                 newStack.Place(snapCard);
                 newStack.Place(mCard);
-                
-            }
-            // snap to top card of existing stack
-            else {
+                StartCoroutine(FallTo(mCard.transform, snapCard.mStack.CalculateNextStackPosition()));  // y = stack offset, z = height
+            } else {    // snap to top card of existing stack
                 snapCard.mStack.Place(mCard);
             }
-            StartCoroutine(FallTo(mCard.transform, snapCard.mStack.CalculateNextStackPosition()));  // y = stack offset, z = height
-        } else {
+           } else {
             if (mCard.mStack != null) {
                 StartCoroutine(FallTo(mCard.mStack.transform, 
                     new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));

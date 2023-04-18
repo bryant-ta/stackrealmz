@@ -54,9 +54,9 @@ public class Stack : MonoBehaviour {
         newStackObj.transform.position = stack[splitIndex].transform.position;
         newStackObj.transform.rotation = stack[splitIndex].transform.rotation;
         Stack newStack = newStackObj.AddComponent<Stack>();
-        
-        for (int i = splitIndex; i < stack.Count; i++) {
-            Card c = stack[i];
+
+        while (stack.Count > splitIndex) {
+            Card c = stack[splitIndex];
             RemoveCard(c);
             newStack.AddCard(c);
         }
@@ -75,7 +75,7 @@ public class Stack : MonoBehaviour {
             if (component != null) {
                 components.Add(component);
             } else {
-                Debug.LogErrorFormat("Component %s missing from card stack ", typeof(T));
+                Debug.LogErrorFormat("Component %s missing from card stack", typeof(T));
             }
         }
     
