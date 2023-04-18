@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -40,19 +41,17 @@ public class Player : MonoBehaviour {
 
     void HoldCard(Moveable c) {
         heldCard = c;
-        heldCard.Pickup();
-        StartCoroutine(FollowMouse());
+        Transform objTrans = heldCard.Pickup();   // TODO: return stack or card object to pickup
+        StartCoroutine(FollowMouse(objTrans));
     }
 
-    IEnumerator FollowMouse() {
-        GameObject obj = heldCard.gameObject;
-        
+    IEnumerator FollowMouse(Transform objTrans) {
         while (heldCard != null) {
             Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 100.0f, dragLayer)) {
                 if (hit.collider != null) {
-                    obj.transform.position = Vector3.Lerp(obj.transform.position, hit.point, dragSpeed*Time.deltaTime);
+                    objTrans.position = Vector3.Lerp(objTrans.position, hit.point, dragSpeed*Time.deltaTime);
                 }
             }
             yield return null;
