@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Possibly separate crafting from Moveable
@@ -22,14 +20,11 @@ public class Moveable : MonoBehaviour {
     // TODO: return stack or card as needed
     public Transform Pickup() {
         // Trigger Stack pickup if in Stack (assumes Stack is always only possible parent)
-        if (mCard.mStack != null) {
-            Transform t = transform.parent.GetComponent<Stack>().Pickup(mCard);
-            return t;
-        }
+         Transform t = transform.parent.GetComponent<Stack>().Pickup(mCard);
 
         SetStackIsPickedUp(true);
 
-        return transform;
+        return t;
     }
 
     public void Drop() {
@@ -38,51 +33,30 @@ public class Moveable : MonoBehaviour {
         // Snap to nearest Card
         float distance = int.MaxValue;
         Transform snapTrans = null;
-
+        Card snapCard = null;
         if (isStackable) {
             foreach (Card card in nearestCards) {
                 float d = Vector3.Distance(transform.position, card.transform.position);
-                // Card not part of a stack, or is top card of a stack
-                if ((card.mStack == null || 
-                     (card.mStack != mCard.mStack && card.mStack.GetTopCardObj() == card.gameObject))
-                    && d < distance) {
+                // Card not part of my stack and is top card of a stack
+                if (card.mStack != mCard.mStack && card.mStack.GetTopCardObj() == card.gameObject && d < distance) {
                     distance = d;
                     snapTrans = card.transform;
+                    snapCard = snapTrans.GetComponent<Card>();
                 }
             }
         }
 
         if (snapTrans) {
-            print(snapTrans.gameObject.name + "\n" + snapTrans.position);
-            Card snapCard = snapTrans.GetComponent<Card>();
-            // create new stack and snap to card
-            if (snapCard.mStack == null) {
-                // TODO: prob move to CardFactory
-                GameObject newStackObj = new GameObject("Stack");
-                newStackObj.transform.position = snapTrans.position;
-                newStackObj.transform.rotation = snapTrans.rotation;
-                
-                Stack newStack = newStackObj.AddComponent<Stack>();
-                newStack.Place(snapCard);
-                newStack.Place(mCard);
-                StartCoroutine(FallTo(mCard.transform, snapCard.mStack.CalculateNextStackPosition()));  // y = stack offset, z = height
-            } else {    // snap to top card of existing stack
-                snapCard.mStack.Place(mCard);
-            }
-           } else {
-            if (mCard.mStack != null) {
-                StartCoroutine(FallTo(mCard.mStack.transform, 
-                    new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
-            } else {
-                StartCoroutine(FallTo(transform, new Vector3(transform.position.x, 0, transform.position.z)));
-            }
-        }
+            List<Card> movedCards = mCard.mStack.GetStack();    // Save copy since PlaceAll will delete parent stack object
+            mCard.mStack.PlaceAll(snapCard.mStack);
 
-        // Do crafting
-        // if (isStackable) {
-        //     Moveable topCardOfStack = mCard.GetTopCardObj().GetComponent<Moveable>();
-        //     StartCoroutine(topCardOfStack.Craft());
-        // }
+            foreach (Card c in movedCards) {                    // Then move each card individually
+                StartCoroutine(FallTo(c.transform, snapCard.mStack.CalculateStackPosition(c)));
+            }
+        } else {
+            StartCoroutine(FallTo(mCard.mStack.transform, 
+                new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
+        }
     }
 
     IEnumerator FallTo(Transform obj, Vector3 endPoint) {
@@ -142,7 +116,8 @@ public class Moveable : MonoBehaviour {
 
         Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
         // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
-        while (craftProgressFill.fillAmount < 1 && !isPickedUp && (transform.childCount == 0 && GetComponentInChildren<Moveable>())) {
+        while (craftProgressFill.fillAmount < 1 && !isPickedUp &&
+               (transform.childCount == 0 && GetComponentInChildren<Moveable>())) {
             craftProgressFill.fillAmount += (float) GameManager.TimeSpeed / craftTime * Time.deltaTime;
             yield return null;
         }
@@ -158,15 +133,12 @@ public class Moveable : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider col) {
-        if (col.gameObject.layer == gameObject.layer && col.gameObject.TryGetComponent(out Card card) 
-            && !nearestCards.Contains(card)) {
+        if (col.gameObject.layer == gameObject.layer && col.gameObject.TryGetComponent(out Card card) && !nearestCards.Contains(card)) {
             nearestCards.Add(card);
         }
     }
-
     void OnTriggerExit(Collider col) {
-        if (col.gameObject.layer == gameObject.layer && col.gameObject.TryGetComponent(out Card card)
-            && nearestCards.Contains(card)) {
+        if (col.gameObject.layer == gameObject.layer && col.gameObject.TryGetComponent(out Card card) && nearestCards.Contains(card)) {
             nearestCards.Remove(card);
         }
     }

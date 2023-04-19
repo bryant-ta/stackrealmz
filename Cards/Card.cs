@@ -16,6 +16,10 @@ public class Card : MonoBehaviour {
         this.name = name;
         this.value = value;
         this.image = image;
+
+        if (transform.parent != null && transform.parent.TryGetComponent(out Stack s)) {
+            mStack = s;
+        }
     }
     
     void OnEnable() { GameManager.Instance.cards.Add(this); }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -41,8 +40,8 @@ public class Player : MonoBehaviour {
 
     void HoldCard(Moveable c) {
         heldCard = c;
-        Transform objTrans = heldCard.Pickup();   // TODO: return stack or card object to pickup
-        StartCoroutine(FollowMouse(objTrans));
+        Transform stackTrans = heldCard.Pickup();
+        StartCoroutine(FollowMouse(stackTrans));
     }
 
     IEnumerator FollowMouse(Transform objTrans) {
