@@ -40,7 +40,7 @@ public class Player : MonoBehaviour {
 
     void HoldCard(Moveable c) {
         heldCard = c;
-        Transform stackTrans = heldCard.Pickup();
+        Transform stackTrans = heldCard.PickUp();
         StartCoroutine(FollowMouse(stackTrans));
     }
 

@@ -23,8 +23,8 @@ public class CardPack : Card {
                 continue;
             }
             
-            GameObject cardObj = CardFactory.CreateCard(cSO);
-            cardObj.transform.position = Utils.GenerateCircleVector(i, numCards, Constants.CardCreationRadius, transform.position);
+            Stack s = CardFactory.CreateStack(cSO);
+            s.transform.position = Utils.GenerateCircleVector(i, numCards, Constants.CardCreationRadius, transform.position);
         }
         
         Destroy(gameObject);

@@ -19,16 +19,24 @@ public class CardFactory : MonoBehaviour {
     
     public GameObject baseCard;
     public static GameObject _baseCard;
+    public GameObject baseStack;
+    public static GameObject _baseStack;
 
     public Recipe[] recipes;
     public static Recipe[] _recipes;
 
     void Awake() {
         _baseCard = baseCard;
+        _baseStack = baseStack;
         _recipes = recipes;
     }
 
-    public static GameObject CreateCard(SO_Card cSO) {
+    public static Stack CreateStack(SO_Card cSO = null) {
+        Stack s = Instantiate(_baseStack).GetComponent<Stack>();
+        if (cSO == null) {
+            return s;
+        }
+        
         GameObject o = Instantiate(_baseCard);
         Card c = o.GetComponent<Card>();
         c.cardData = cSO;
@@ -38,19 +46,25 @@ public class CardFactory : MonoBehaviour {
             Food f = o.AddComponent<Food>();
             f.foodData = fSO;
             o.GetComponent<Moveable>().mCard = f;
+            s.Place(f);
         } else if (cSO is SO_Villager vSO) {
             Destroy(c);
             Villager v = o.AddComponent<Villager>();
             v.villagerData = vSO;
             o.GetComponent<Moveable>().mCard = v;
+            s.Place(v);
         } else if (cSO is SO_CardPack cpSO) {
             Destroy(c);
             CardPack cp = o.AddComponent<CardPack>();
             cp.cardPackData = cpSO;
             o.GetComponent<Moveable>().mCard = cp;
+            s.Place(cp);
+        } else {
+            o.GetComponent<Moveable>().mCard = c;
+            s.Place(c);
         }
 
-        return o;
+        return s;
     }
 
     public static Recipe LookupRecipe(List<string> materials) {

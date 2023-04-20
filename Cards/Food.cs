@@ -12,7 +12,7 @@ public class Food : Card {
         saturation -= 1;
         if (saturation == 0) {
             if (TryGetComponent(out Moveable moveable)) {
-                moveable.Pickup();
+                moveable.PickUp();
             }
             Destroy(gameObject, 0.05f);
         }
