@@ -3,7 +3,7 @@ public class Food : Card {
 
     public int saturation;
 
-    void Start() {
+    new void Start() {
         Setup(foodData.name, foodData.value, foodData.image);
         saturation = foodData.saturation;
     }

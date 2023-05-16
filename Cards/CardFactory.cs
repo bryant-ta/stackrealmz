@@ -17,50 +17,51 @@ public class CardFactory : MonoBehaviour {
     }
     static CardFactory _instance;
     
-    public GameObject baseCard;
-    public static GameObject _baseCard;
-    public GameObject baseStack;
-    public static GameObject _baseStack;
-
+    public GameObject cardBase;
+    public static GameObject _cardBase;
+    public GameObject foodBase;
+    public static GameObject _foodBase;
+    public GameObject animalBase;
+    public static GameObject _animalBase;
+    public GameObject cardPackBase;
+    public static GameObject _cardPackBase;
+    
+    public GameObject stackBase;
+    public static GameObject _stackBase;
     public Recipe[] recipes;
     public static Recipe[] _recipes;
 
     void Awake() {
-        _baseCard = baseCard;
-        _baseStack = baseStack;
+        _cardBase = cardBase;
+        _foodBase = foodBase;
+        _animalBase = animalBase;
+        _cardPackBase = cardPackBase;
+        
+        _stackBase = stackBase;
         _recipes = recipes;
     }
 
     public static Stack CreateStack(SO_Card cSO = null) {
-        Stack s = Instantiate(_baseStack).GetComponent<Stack>();
+        Stack s = Instantiate(_stackBase).GetComponent<Stack>();
         if (cSO == null) {
             return s;
         }
         
-        GameObject o = Instantiate(_baseCard);
-        Card c = o.GetComponent<Card>();
-        c.cardData = cSO;
-
         if (cSO is SO_Food fSO) {
-            Destroy(c);
-            Food f = o.AddComponent<Food>();
+            Food f = Instantiate(_foodBase).GetComponent<Food>();
             f.foodData = fSO;
-            o.GetComponent<Moveable>().mCard = f;
             s.Place(f);
-        } else if (cSO is SO_Villager vSO) {
-            Destroy(c);
-            Villager v = o.AddComponent<Villager>();
-            v.villagerData = vSO;
-            o.GetComponent<Moveable>().mCard = v;
-            s.Place(v);
+        } else if (cSO is SO_Animal aSO) {
+            Animal a = Instantiate(_animalBase).GetComponent<Animal>();
+            a.animalData = aSO;
+            s.Place(a);
         } else if (cSO is SO_CardPack cpSO) {
-            Destroy(c);
-            CardPack cp = o.AddComponent<CardPack>();
+            CardPack cp = Instantiate(_cardPackBase).GetComponent<CardPack>();
             cp.cardPackData = cpSO;
-            o.GetComponent<Moveable>().mCard = cp;
             s.Place(cp);
-        } else {
-            o.GetComponent<Moveable>().mCard = c;
+        } else {    // is just SO_Card
+            Card c = Instantiate(_cardBase).GetComponent<Card>();
+            c.cardData = cSO;
             s.Place(c);
         }
 

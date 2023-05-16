@@ -10,14 +10,14 @@ public class Moveable : MonoBehaviour {
     public List<Card> nearestCards = new List<Card>();
 
     bool isPickedUp;
-    public Card mCard; // public for CardFactory to reset correctly after destroying Card
+    Card mCard;
 
     void Awake() { mCard = GetComponent<Card>(); }
 
     // PickUp manipulates this card and any cards under it in a stack.
     // Returns transform of this card's stack after being picked up
     public Transform PickUp() {
-         Transform t = mCard.mStack.Pickup(mCard);
+         Transform t = mCard.mStack.PickUp(mCard);
          
         SetStackIsPickedUp(true);
 
@@ -51,7 +51,7 @@ public class Moveable : MonoBehaviour {
                 StartCoroutine(FallTo(c.transform, snapCard.mStack.CalculateStackPosition(c)));
             }
         } else {
-            mCard.mStack.PlaceAll(null);                            // No stack manipulations, but need to trigger crafting
+            mCard.mStack.PlaceAll(null);                // No stack manipulations, but need to trigger crafting
             StartCoroutine(FallTo(mCard.mStack.transform, 
                 new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
         }

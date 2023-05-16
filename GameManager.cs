@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour {
 
     public List<Card> cards;
     public List<Food> foods;
-    public List<Villager> villagers;
+    public List<Animal> animals;
 
     // Day Vars
     public int dayDuration = 1;
@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour {
             dayProgressFill.fillAmount = 0f;
 
             if (doEating) {
-                foreach (Villager v in villagers) {
+                foreach (Animal v in animals) {
                     if (foods.Count == 0) {
                         // TODO: You lost function
                         print("YOU LOST");

@@ -23,7 +23,7 @@ public class Card : MonoBehaviour {
             mStack = s;
         }
     }
-    
+
     void OnEnable() { GameManager.Instance.cards.Add(this); }
     void OnDisable() { GameManager.Instance.cards.Remove(this); }
 }

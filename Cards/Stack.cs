@@ -6,10 +6,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class Stack : MonoBehaviour {
+    [SerializeField] float cardPosOffset = 0.2f;
+    
     [SerializeField] List<Card> stack = new List<Card>();
 
     [SerializeField] GameObject craftProgressBar;
-    public bool isChanged;
+    [SerializeField] bool isChanged;
 
     public void Place(Card card) {
         AddCard(card);
@@ -29,7 +31,7 @@ public class Stack : MonoBehaviour {
         otherStack.TryCraft();
     }
     
-    public Transform Pickup(Card card) {
+    public Transform PickUp(Card card) {
         isChanged = true;
         if (card == stack.First()) {
             return transform;
@@ -38,6 +40,13 @@ public class Stack : MonoBehaviour {
             TryCraft();
             return newStack;
         }
+    }
+
+    public Transform Extract(Card card) {
+        isChanged = true;
+        RemoveCard(card);
+        TryCraft();
+        return card.transform;
     }
 
     // SplitStack returns a new stack (+object) containing all cards from input card to end of current stack
@@ -54,7 +63,9 @@ public class Stack : MonoBehaviour {
 
     // Tries crafting with current stack. This should always be only func called when crafting
     void TryCraft() {
-        StartCoroutine(Craft());
+        if (stack.Count > 1) {
+            StartCoroutine(Craft());
+        }
     }
     
     // must be coroutine for pausing on DoCraftTime
@@ -81,7 +92,7 @@ public class Stack : MonoBehaviour {
                     }
 
                     Stack s = CardFactory.CreateStack(cSO);
-                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.products.Length,
+                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.numDrops,
                         Constants.CardCreationRadius, transform.position);
                 }
             } else {
@@ -143,7 +154,7 @@ public class Stack : MonoBehaviour {
             Destroy(gameObject);
         }
     }
-    
+
     // GetTopCardObj returns the highest (i.e. has cards under) card in the stack
     public GameObject GetTopCardObj() {
         return stack.Last().gameObject;
@@ -169,7 +180,6 @@ public class Stack : MonoBehaviour {
 
         return cardNames;
     }
-
     public List<Card> GetStack() {
         return new List<Card>(stack);
     }
@@ -177,6 +187,6 @@ public class Stack : MonoBehaviour {
     // CalculateStackPosition returns correct card position according to its stack index
     public Vector3 CalculateStackPosition(Card card) {
         int i = stack.IndexOf(card);
-        return new Vector3(0, 0.01f * i, -0.2f * i);
+        return new Vector3(0, 0.01f * i, -cardPosOffset * i);
     }
 }
