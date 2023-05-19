@@ -18,6 +18,12 @@ public class Animal : Card {
         consumption = animalData.consumption;
 
         GetComponent<Health>().onDeath.AddListener(Death);
+
+
+
+
+
+        Attack();
     }
 
     public void StartAttack() {
@@ -38,11 +44,18 @@ public class Animal : Card {
     }
 
     void Attack() {
-        Slot targetSlot = mSlot.Forward;
+        print("attack?");
+        animalData.Attack();
+        animalData.attackType.Attack();
+        // Slot targetSlot = mSlot.Forward;
+        //
+        // if (targetSlot) {
+        //     targetSlot.Card.GetComponent<Health>().DoDamage(atkDmg);
+        // }
+    }
+
+    void Ability() {
         
-        if (targetSlot) {
-            targetSlot.Card.GetComponent<Health>().DoDamage(atkDmg);
-        }
     }
 
     void Death() {

@@ -47,6 +47,7 @@ public class CardFactory : MonoBehaviour {
             return s;
         }
         
+        // possibly use interface to fix this strangeness
         if (cSO is SO_Food fSO) {
             Food f = Instantiate(_foodBase).GetComponent<Food>();
             f.foodData = fSO;
