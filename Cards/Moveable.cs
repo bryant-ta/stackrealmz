@@ -7,7 +7,7 @@ using UnityEngine;
 public class Moveable : MonoBehaviour {
     public bool isStackable = true;
     public float dropSpeed = 1;
-    public List<Card> nearestCards = new List<Card>();
+    public List<Transform> nearestSnappableObjs = new List<Transform>();
 
     bool isPickedUp;
     Card mCard;
@@ -17,42 +17,57 @@ public class Moveable : MonoBehaviour {
     // PickUp manipulates this card and any cards under it in a stack.
     // Returns transform of this card's stack after being picked up
     public Transform PickUp() {
-         Transform t = mCard.mStack.PickUp(mCard);
-         
+        Transform t = mCard.mStack.PickUp(mCard);
+        if (mCard.mSlot) {
+            mCard.mSlot.PickUp();
+        }
+
         SetStackIsPickedUp(true);
 
         return t;
     }
-    
+
     public void Drop() {
         SetStackIsPickedUp(false);
 
         // Snap to nearest Card
-        float distance = int.MaxValue;
-        Transform snapTrans = null;
+        // - not pretty... but needed to treat Stack and Slot differently but still snap... hmm
+        float minDistance = int.MaxValue;
         Card snapCard = null;
-        if (isStackable) {
-            foreach (Card card in nearestCards) {
-                float d = Vector3.Distance(transform.position, card.transform.position);
-                // Card not part of my stack and is top card of a stack
-                if (card.mStack != mCard.mStack && card.mStack.GetTopCardObj() == card.gameObject && d < distance) {
-                    distance = d;
-                    snapTrans = card.transform;
-                    snapCard = snapTrans.GetComponent<Card>();
+        Slot snapSlot = null;
+        foreach (Transform near in nearestSnappableObjs) {
+            float d = Vector3.Distance(transform.position, near.transform.position);
+            if (near.TryGetComponent(out Card card)) {
+                // Card is not part of my stack and is top card of a stack
+                if (card.mStack != mCard.mStack && card.mStack.GetTopCardObj() == card.gameObject && card.GetComponent<Moveable>().isStackable && d < minDistance) {
+                    snapSlot = null;
+                    minDistance = d;
+                    snapCard = card.transform.GetComponent<Card>();
+                }
+            } else if (near.TryGetComponent(out Slot slot)) {
+                if (slot.IsEmpty() && d < minDistance) {
+                    snapCard = null;
+                    minDistance = d;
+                    snapSlot = slot;
                 }
             }
         }
 
-        if (snapTrans) {
-            List<Card> movedCards = mCard.mStack.GetStack();    // Save copy since PlaceAll will delete parent stack object
+        if (snapCard) {
+            List<Card> movedCards = mCard.mStack.GetStack(); // Save copy since PlaceAll will delete parent stack object
             mCard.mStack.PlaceAll(snapCard.mStack);
 
-            foreach (Card c in movedCards) {                    // Then move each card individually
+            foreach (Card c in movedCards) { // Then move each card individually
                 StartCoroutine(FallTo(c.transform, snapCard.mStack.CalculateStackPosition(c)));
             }
+        } else if (snapSlot && mCard.mStack.GetStackSize() == 1) {
+            snapSlot.Place(mCard);
+            isStackable = false;
+            StartCoroutine(FallTo(mCard.mStack.transform,
+                new Vector3(snapSlot.transform.position.x, 0.01f, snapSlot.transform.position.z)));
         } else {
-            mCard.mStack.PlaceAll(null);                // No stack manipulations, but need to trigger crafting
-            StartCoroutine(FallTo(mCard.mStack.transform, 
+            mCard.mStack.PlaceAll(null); // No stack manipulations, but need to trigger crafting
+            StartCoroutine(FallTo(mCard.mStack.transform,
                 new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
         }
     }
@@ -68,13 +83,14 @@ public class Moveable : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider col) {
-        if (col.gameObject.layer == gameObject.layer && col.gameObject.TryGetComponent(out Card card) && !nearestCards.Contains(card)) {
-            nearestCards.Add(card);
+        if (col.gameObject.layer == gameObject.layer && !nearestSnappableObjs.Contains(col.transform)) {
+            nearestSnappableObjs.Add(col.transform);
         }
     }
+
     void OnTriggerExit(Collider col) {
-        if (col.gameObject.layer == gameObject.layer && col.gameObject.TryGetComponent(out Card card) && nearestCards.Contains(card)) {
-            nearestCards.Remove(card);
+        if (col.gameObject.layer == gameObject.layer && nearestSnappableObjs.Contains(col.transform)) {
+            nearestSnappableObjs.Remove(col.transform);
         }
     }
 

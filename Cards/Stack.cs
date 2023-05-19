@@ -183,6 +183,9 @@ public class Stack : MonoBehaviour {
     public List<Card> GetStack() {
         return new List<Card>(stack);
     }
+    public int GetStackSize() {
+        return stack.Count;
+    }
 
     // CalculateStackPosition returns correct card position according to its stack index
     public Vector3 CalculateStackPosition(Card card) {

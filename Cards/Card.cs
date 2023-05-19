@@ -9,6 +9,7 @@ public class Card : MonoBehaviour {
     public Sprite image;
 
     public Stack mStack;
+    public Slot mSlot;
 
     public void Start() { Setup(cardData.name, cardData.value, cardData.image); }
 

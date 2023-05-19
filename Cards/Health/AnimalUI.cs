@@ -15,7 +15,7 @@ public class AnimalUI : MonoBehaviour {
         if (mAnimal != null) {
             nameText.text = mAnimal.animalData.name;
             hpText.text = mAnimal.animalData.hp.ToString();
-            attackText.text = mAnimal.animalData.attack.ToString();
+            attackText.text = mAnimal.animalData.atkDmg.ToString();
         }
     }
 
