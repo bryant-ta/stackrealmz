@@ -8,23 +8,14 @@ public class Slot : MonoBehaviour {
     public Card Card { get { return card; } private set { card = value; } }
     [SerializeField] Card card;
     
+    public SlotGrid SlotGrid { get { return mSlotGrid; } private set { mSlotGrid = value; } }
     [SerializeField] SlotGrid mSlotGrid;
-
-    public Slot Forward {
-        get {
-            if (mSlotGrid) {
-                return mSlotGrid.Forward(this);
-            }
-    
-            return null;
-        }
-    }
 
     public void Place(Card c) {
         card = c;
         c.mSlot = this;
         if (c.TryGetComponent(out Animal animal)) {
-            animal.StartAttack();
+            animal.StartCombatState();
         }
     }
 
@@ -32,6 +23,11 @@ public class Slot : MonoBehaviour {
         Card c = card;
         card.mSlot = null;
         card = null;
+        
+        if (c.TryGetComponent(out Animal animal)) {
+            animal.EndCombatState();
+        }
+        
         return c.transform;
     }
 

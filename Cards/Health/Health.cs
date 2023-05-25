@@ -1,29 +1,41 @@
 using UnityEngine;
-using UnityEngine.Events;
 
 public class Health : MonoBehaviour {
+    public int maxHp;
     public int hp;
-
-    public UnityEvent<int> onSetHP;
-    public UnityEvent<int> onDamage;
-    public UnityEvent onDeath;
 
     void Start() {
         if (TryGetComponent(out Animal a)) {
-            SetHP(a.animalData.hp);
+            SetMaxHp(a.animalData.hp);
+            SetHp(a.animalData.hp);
         }
     }
 
-    public void SetHP(int n) {
+    public void Heal(int n) {
+        int newHp = hp + n;
+        if (newHp > maxHp) {
+            newHp = maxHp;
+        }
+        EventManager.TriggerEvent(gameObject, EventName.OnHeal, n);
+        SetHp(newHp);
+    }
+
+    public void Damage(int n) {
+        int newHp = hp - n;
+        if (newHp <= 0) {
+            EventManager.TriggerEvent(gameObject, EventName.OnDeath);
+        }
+        EventManager.TriggerEvent(gameObject, EventName.OnDamage, n);
+        SetHp(newHp);
+    }
+
+    public void SetHp(int n) {
         hp = n;
-        onSetHP.Invoke(n);
+        EventManager.TriggerEvent(gameObject, EventName.OnSetHp, n);
     }
-
-    public void DoDamage(int n) {
-        SetHP(hp - n);
-        onDamage.Invoke(n);
-        if (hp <= 0) {
-            onDeath.Invoke();
-        }
+    
+    public void SetMaxHp(int n) {
+        maxHp = n;
+        EventManager.TriggerEvent(gameObject, EventName.OnSetMaxHp, n);
     }
 }

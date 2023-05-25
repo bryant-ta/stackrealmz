@@ -26,11 +26,19 @@ public class SlotGrid : MonoBehaviour {
         }
     }
 
-    public Slot Forward(Slot slot) {
-        if (slot.y == height - 1) {
+    public Slot Forward(Slot origin) {
+        return SelectSlot(origin, new Vector2Int(0, 1));
+    }
+
+    public Slot SelectSlot(Slot origin, Vector2Int relativePos) {
+        int targetX = origin.x + relativePos.x;
+        int targetY = origin.y + relativePos.y;
+
+        if (targetX > width - 1 || targetX < 0 || targetY > height - 1 || targetY < 0) {
             return null;
         }
-        return slotGrid[slot.x, slot.y + 1];
+
+        return slotGrid[targetX, targetY];
     }
 
     void CreateSlotGrid() {
