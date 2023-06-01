@@ -16,26 +16,26 @@ public class Health : MonoBehaviour {
         if (newHp > maxHp) {
             newHp = maxHp;
         }
-        EventManager.TriggerEvent(gameObject, EventName.OnHeal, n);
+        EventManager.Invoke(gameObject, EventID.Heal, n);
         SetHp(newHp);
     }
 
     public void Damage(int n) {
         int newHp = hp - n;
         if (newHp <= 0) {
-            EventManager.TriggerEvent(gameObject, EventName.OnDeath);
+            EventManager.Invoke(gameObject, EventID.Death);
         }
-        EventManager.TriggerEvent(gameObject, EventName.OnDamage, n);
+        EventManager.Invoke(gameObject, EventID.Damage, n);
         SetHp(newHp);
     }
 
     public void SetHp(int n) {
         hp = n;
-        EventManager.TriggerEvent(gameObject, EventName.OnSetHp, n);
+        EventManager.Invoke(gameObject, EventID.SetHp, n);
     }
     
     public void SetMaxHp(int n) {
         maxHp = n;
-        EventManager.TriggerEvent(gameObject, EventName.OnSetMaxHp, n);
+        EventManager.Invoke(gameObject, EventID.SetMaxHp, n);
     }
 }

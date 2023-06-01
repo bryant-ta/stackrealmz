@@ -29,9 +29,9 @@ public class Player : MonoBehaviour {
             if (hit.collider != null) {
                 if (hit.collider.gameObject.TryGetComponent(out CardPack cardPack)) {
                     cardPack.Open();
-                } else if (hit.collider.gameObject.TryGetComponent(out Animal animal)) {
-                    animal.Ability();
                 }
+                
+                EventManager.Invoke(hit.collider.gameObject, EventID.SecondaryDown);
             }
         }
     }

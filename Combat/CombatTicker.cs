@@ -10,10 +10,12 @@ public class CombatTicker {
     int curTick;
 
     GameObject ownerObj;
-    EventName tickEvent;
-    EventName tickerEndEvent;
+    EventID tickEvent;
+    EventID tickerEndEvent;
 
-    public CombatTicker(GameObject ownerObj, EventName tickEvent, EventName tickerEndEvent, int endTick, int startTick = 0) {
+    bool autoReset;
+
+    public CombatTicker(GameObject ownerObj, EventID tickEvent, EventID tickerEndEvent, int endTick, bool autoReset = true, int startTick = 0) {
         this.ownerObj = ownerObj;
         this.tickEvent = tickEvent;
         this.tickerEndEvent = tickerEndEvent;
@@ -21,21 +23,28 @@ public class CombatTicker {
         this.endTick = endTick;
         this.startTick = startTick;
         curTick = startTick;
+
+        this.autoReset = autoReset;
         
         Start();
     }
 
     public void Tick(int n = 1) {
-        curTick += n;
         if (curTick >= endTick) {
-            EventManager.TriggerEvent(ownerObj, tickerEndEvent);
-            Reset();
-            return;
+            curTick = endTick;
+            if (autoReset) {
+                EventManager.Invoke(ownerObj, tickerEndEvent);
+                Reset();
+                return;
+            }
+
+            return; // if no autoreset, wait for manual reset at full timer 
         }
+        curTick += n;
 
         CombatTickerArgs args = new CombatTickerArgs
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
-        EventManager.TriggerEvent(ownerObj, tickEvent, args);
+        EventManager.Invoke(ownerObj, tickEvent, args);
     }
     public void OneTick() { // Required for adding listener to CombatManager, matching delegate signature
         Tick();
@@ -47,7 +56,11 @@ public class CombatTicker {
         }
         CombatTickerArgs args = new CombatTickerArgs
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
-        EventManager.TriggerEvent(ownerObj, tickEvent, args);
+        EventManager.Invoke(ownerObj, tickEvent, args);
+    }
+
+    public bool Ready() {
+        return curTick == endTick;
     }
 
     public void SetEndTick(int n) {
@@ -79,12 +92,16 @@ public class CombatTicker {
 
     public void Start() { CombatManager.onTick.AddListener(OneTick); }
     public void Pause() { CombatManager.onTick.RemoveListener(OneTick); }
+    public void Stop() {
+        Reset();
+        Pause();
+    }
 
     public void Reset() {
         curTick = startTick;
         CombatTickerArgs args = new CombatTickerArgs
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
-        EventManager.TriggerEvent(ownerObj, tickEvent, args);
+        EventManager.Invoke(ownerObj, tickEvent, args);
     }
 }
 

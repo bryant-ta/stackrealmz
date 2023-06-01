@@ -2,20 +2,26 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-public enum EventName {
-    OnTick,         // General - Combat
-    OnHeal,         // Health
-    OnDamage,
-    OnSetHp,
-    OnSetMaxHp,
-    OnDeath,
-    OnAttack,       // Attacking
-    OnAttackTick,
+public enum EventID {
+    PrimaryDown = 0,    // Input
+    SecondaryDown = 1,
+    EnterCombat = 2,    // General - Combat
+    ExitCombat = 3,
+    Heal,           // Health
+    Damage,
+    SetHp,
+    SetMaxHp,
+    Death,
+    AttackReady,    // Attack
+    AttackTick,
+    SetAttack,
+    AbilityReady,   // Ability
+    AbilityTick
 }
 
 public class EventManager : MonoBehaviour {
     // Dict holds events per gameObject instance
-    static Dictionary<object, Dictionary<EventName, Delegate>> events;
+    static Dictionary<object, Dictionary<EventID, Delegate>> eventsDict;
 
     // public static EventManager Instance => _instance;
     static EventManager _instance;
@@ -28,68 +34,68 @@ public class EventManager : MonoBehaviour {
             _instance = this;
         }
 
-        events = new Dictionary<object, Dictionary<EventName, Delegate>>();
+        eventsDict = new Dictionary<object, Dictionary<EventID, Delegate>>();
     }
 
-    public static void AddListener<T>(object ownerObj, EventName eventName, Action<T> listener) {
-        Dictionary<EventName, Delegate> thisObjEvents;
-        if (events.TryGetValue(ownerObj, out thisObjEvents)) {
-            if (thisObjEvents.ContainsKey(eventName)) {
+    public static void Subscribe<T>(object ownerObj, EventID eventID, Action<T> listener) {
+        Dictionary<EventID, Delegate> thisObjEvents;
+        if (EventManager.eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+            if (thisObjEvents.ContainsKey(eventID)) {
                 // Delegate.Combine adds listeners - similar to event += listener
-                thisObjEvents[eventName] = Delegate.Combine(thisObjEvents[eventName], listener);
+                thisObjEvents[eventID] = Delegate.Combine(thisObjEvents[eventID], listener);
             }
             else {
-                thisObjEvents[eventName] = listener;
+                thisObjEvents[eventID] = listener;
             }
         }
         else {
-            thisObjEvents = new Dictionary<EventName, Delegate>();
-            thisObjEvents[eventName] = listener;
-            events[ownerObj] = thisObjEvents;
+            thisObjEvents = new Dictionary<EventID, Delegate>();
+            thisObjEvents[eventID] = listener;
+            EventManager.eventsDict[ownerObj] = thisObjEvents;
         }
     }
-    public static void AddListener(object ownerObj, EventName eventName, Action listener) {
-        Dictionary<EventName, Delegate> thisObjEvents;
-        if (events.TryGetValue(ownerObj, out thisObjEvents)) {
-            if (thisObjEvents.ContainsKey(eventName)) {
+    public static void Subscribe(object ownerObj, EventID eventID, Action listener) {
+        Dictionary<EventID, Delegate> thisObjEvents;
+        if (EventManager.eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+            if (thisObjEvents.ContainsKey(eventID)) {
                 // Delegate.Combine adds listeners - similar to event += listener
-                thisObjEvents[eventName] = Delegate.Combine(thisObjEvents[eventName], listener);
+                thisObjEvents[eventID] = Delegate.Combine(thisObjEvents[eventID], listener);
             }
             else {
-                thisObjEvents[eventName] = listener;
+                thisObjEvents[eventID] = listener;
             }
         }
         else {
-            thisObjEvents = new Dictionary<EventName, Delegate>();
-            thisObjEvents[eventName] = listener;
-            events[ownerObj] = thisObjEvents;
+            thisObjEvents = new Dictionary<EventID, Delegate>();
+            thisObjEvents[eventID] = listener;
+            EventManager.eventsDict[ownerObj] = thisObjEvents;
         }
     }
 
-    public static void RemoveListener<T>(object ownerObj, EventName eventName, Action<T> listener) {
-        Dictionary<EventName, Delegate> thisObjEvents;
-        if (events.TryGetValue(ownerObj, out thisObjEvents)) {
-            if (thisObjEvents.ContainsKey(eventName)) {
+    public static void Unsubscribe<T>(object ownerObj, EventID eventID, Action<T> listener) {
+        Dictionary<EventID, Delegate> thisObjEvents;
+        if (EventManager.eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+            if (thisObjEvents.ContainsKey(eventID)) {
                 // Delegate.Remove removes listeners - similar to event -= listener
-                thisObjEvents[eventName] = Delegate.Remove(thisObjEvents[eventName], listener);
+                thisObjEvents[eventID] = Delegate.Remove(thisObjEvents[eventID], listener);
             }
         }
     }
 
-    public static void TriggerEvent<T>(object ownerObj, EventName eventName, T eventData = default) {
-        Dictionary<EventName, Delegate> thisObjEvents;
-        if (events.TryGetValue(ownerObj, out thisObjEvents)) {
-            if (thisObjEvents.TryGetValue(eventName, out Delegate eventAction)) {
+    public static void Invoke<T>(object ownerObj, EventID eventID, T eventData = default) {
+        Dictionary<EventID, Delegate> thisObjEvents;
+        if (eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+            if (thisObjEvents.TryGetValue(eventID, out Delegate eventAction)) {
                 if (eventAction is Action<T>) {
                     (eventAction as Action<T>).Invoke(eventData);
                 }
             }
         }
     }
-    public static void TriggerEvent(object ownerObj, EventName eventName) {
-        Dictionary<EventName, Delegate> thisObjEvents;
-        if (events.TryGetValue(ownerObj, out thisObjEvents)) {
-            if (thisObjEvents.TryGetValue(eventName, out Delegate eventAction)) {
+    public static void Invoke(object ownerObj, EventID eventID) {
+        Dictionary<EventID, Delegate> thisObjEvents;
+        if (eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+            if (thisObjEvents.TryGetValue(eventID, out Delegate eventAction)) {
                 if (eventAction is Action) {
                     (eventAction as Action).Invoke();
                 }

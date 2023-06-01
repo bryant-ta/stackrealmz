@@ -125,11 +125,8 @@ public class Recipe {
     public string[] materials;
     public SO_Card[] products;
     public int craftTime;
+    public string[] keepMaterials;
+        
     public List<Drop> dropTable;    // here until JSON recipe import
     public int numDrops;
 }
-
-// [Serializable]
-// public class RandomizedRecipe : Recipe {
-//     public List<Drop> dropTable;
-// }

@@ -1,21 +1,12 @@
 public class Food : Card {
     public SO_Food foodData;
 
-    public int saturation;
+    public Effect foodEffect;
 
     new void Start() {
         Setup(foodData.name, foodData.value, foodData.image);
-        saturation = foodData.saturation;
-    }
-
-    public void Eat() {
-        saturation -= 1;
-        if (saturation == 0) {
-            if (TryGetComponent(out Moveable moveable)) {
-                moveable.PickUp();
-            }
-            Destroy(gameObject, 0.05f);
-        }
+        foodEffect = foodData.effect;
+        foodEffect.effect = EffectTypeLookUp.LookUp[foodEffect.effectType];
     }
 
     void OnEnable() { GameManager.Instance.foods.Add(this); }

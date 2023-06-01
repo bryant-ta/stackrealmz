@@ -1,9 +1,8 @@
-using System;
 using UnityEngine;
 
 public class Slot : MonoBehaviour {
     public int x, y;
-    public string terrain;  // TODO: prob make terrain an enum or object, placeholder
+    public Terrain terrain;
 
     public Card Card { get { return card; } private set { card = value; } }
     [SerializeField] Card card;

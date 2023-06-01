@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour {
                         break;
                     }
 
-                    foods[0].Eat();
+                    // foods[0].Eat();
                 }
             }
         }

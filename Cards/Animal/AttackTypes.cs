@@ -25,7 +25,7 @@ public static class AttackTypeLookUp {
 /********************************************/
 
 public interface IAttack {
-    void Attack(Slot mSlot, int dmg);
+    public void Attack(Slot mSlot, int dmg);
 }
 
 public class StandardAttack : IAttack

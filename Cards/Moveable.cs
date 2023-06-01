@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 // Possibly separate crafting from Moveable
@@ -20,6 +21,7 @@ public class Moveable : MonoBehaviour {
         Transform t = mCard.mStack.PickUp(mCard);
         if (mCard.mSlot) {
             mCard.mSlot.PickUp();
+            isStackable = true;
         }
 
         SetStackIsPickedUp(true);
@@ -35,7 +37,14 @@ public class Moveable : MonoBehaviour {
         float minDistance = int.MaxValue;
         Card snapCard = null;
         Slot snapSlot = null;
-        foreach (Transform near in nearestSnappableObjs) {
+        foreach (Transform near in nearestSnappableObjs.ToList()) {
+            // For keepCard recipes, a nearest card could be destroyed, but ref to it remains in nearestSnappableObjs.
+            // This cleans up those refs... Other solution could be moving object to be destroyed far away to trigger OnTriggerExit?
+            if (near == null) {
+                nearestSnappableObjs.Remove(near);
+                continue;
+            }
+            
             float d = Vector3.Distance(transform.position, near.transform.position);
             if (near.TryGetComponent(out Card card)) {
                 // Card is not part of my stack and is top card of a stack
@@ -87,7 +96,6 @@ public class Moveable : MonoBehaviour {
             nearestSnappableObjs.Add(col.transform);
         }
     }
-
     void OnTriggerExit(Collider col) {
         if (col.gameObject.layer == gameObject.layer && nearestSnappableObjs.Contains(col.transform)) {
             nearestSnappableObjs.Remove(col.transform);

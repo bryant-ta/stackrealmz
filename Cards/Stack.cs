@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -70,8 +71,17 @@ public class Stack : MonoBehaviour {
     
     // must be coroutine for pausing on DoCraftTime
     IEnumerator Craft() {
-        yield return null;
+        // yield return null;
         isChanged = false;
+        
+        // TODO: TEMP: This is temp way to apply food affects to animals
+        if (stack.Last() is Food f && stack.First() is Animal a && stack.Count == 2) {
+            a.GetComponent<EffectController>().AddEffectPerm(f.foodEffect);
+            RemoveCard(f);
+            Destroy(f.gameObject);
+            yield break;
+        }
+        // END TEMP
         
         List<string> cardNames = GetCardsNamesInStack();
         Recipe validRecipe = CardFactory.LookupRecipe(cardNames);
@@ -84,6 +94,7 @@ public class Stack : MonoBehaviour {
         }));
 
         if (craftFinished == 1 && !isChanged) {
+            // Create recipe products
             if (validRecipe.dropTable.Count > 0) {
                 for (int i = 0; i < validRecipe.numDrops; i++) {
                     SO_Card cSO = CardFactory.RollDrop(validRecipe.dropTable);
@@ -102,10 +113,22 @@ public class Stack : MonoBehaviour {
                         Constants.CardCreationRadius, transform.position);
                 }
             }
-
-            // TODO: convert to event
-            // Destroys all children too
-            Destroy(gameObject);
+            
+            if (validRecipe.keepMaterials.Length > 0) {     // Keep cards marked by recipe
+                foreach (Card c in stack.ToList()) {
+                    if (validRecipe.keepMaterials.Contains(c.name)) {
+                        continue;
+                    }
+                    
+                    RemoveCard(c);
+                    Destroy(c.gameObject);
+                }
+                RecalculateStackPositions();
+            } else {                                        // Used up all cards, destroy whole stack
+                // TODO: convert to event
+                // Destroys all children too
+                Destroy(gameObject);
+            }
         }
     }
 
@@ -180,6 +203,15 @@ public class Stack : MonoBehaviour {
 
         return cardNames;
     }
+    public Card GetCardByName(string cardName) {
+        foreach (Card c in stack) {
+            if (c.name == cardName) {
+                return c;
+            }
+        }
+
+        return null;
+    }
     public List<Card> GetStack() {
         return new List<Card>(stack);
     }
@@ -191,5 +223,11 @@ public class Stack : MonoBehaviour {
     public Vector3 CalculateStackPosition(Card card) {
         int i = stack.IndexOf(card);
         return new Vector3(0, 0.01f * i, -cardPosOffset * i);
+    }
+    // RecalculateStackPositions moves stack cards to their correct positions according to stack indexes
+    public void RecalculateStackPositions() {
+        foreach (Card c in stack) {
+            c.transform.localPosition = CalculateStackPosition(c);
+        }
     }
 }
