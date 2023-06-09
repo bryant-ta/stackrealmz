@@ -41,6 +41,12 @@ public class CardFactory : MonoBehaviour {
         _recipes = recipes;
     }
 
+    /*
+     * CreateStack creates an empty stack. If a SO_Card is provided, CreateStack will add SO_Card to the stack as a Card.
+     * Typical Usage:
+            Stack s = CardFactory.CreateStack(stockCardData);
+            s.transform.position = CalculateCardPosition();
+     */
     public static Stack CreateStack(SO_Card cSO = null) {
         Stack s = Instantiate(_stackBase).GetComponent<Stack>();
         if (cSO == null) {
@@ -69,6 +75,16 @@ public class CardFactory : MonoBehaviour {
         return s;
     }
 
+    public static Stack CreateEnemy(SO_Animal aSO) {
+        Stack s = Instantiate(_stackBase).GetComponent<Stack>();
+        Animal a = Instantiate(_animalBase).GetComponent<Animal>();
+        a.animalData = aSO;
+        a.isEnemy = true;
+        s.Place(a);
+
+        return s;
+    }
+
     public static Recipe LookupRecipe(List<string> materials) {
         string[] materialsArr = materials.OrderBy((x => x)).ToArray();
         foreach (Recipe r in _recipes) {
@@ -80,6 +96,12 @@ public class CardFactory : MonoBehaviour {
         return null;
     }
     
+    /*
+     * Usage:
+     * - Each Drop.cardDropPool is rolled at its percentage, favoring the lowest percentage successful roll
+     * - Percentage between Drops in one drop table should never match, put same percentage cards in one cardDropPool
+     * - Randomly selects card from cardDropPool
+     */
     public static SO_Card RollDrop(List<Drop> dropTable) {
         // Roll eligible drops
         int roll = Random.Range(1, 101);
@@ -92,26 +114,15 @@ public class CardFactory : MonoBehaviour {
 
         // Choose most rare drop
         if (possibleDrops.Count > 0) {
-            Drop ret = possibleDrops[0];
-            List<Drop> tiedDrops = new List<Drop>();
+            Drop retDrop = possibleDrops[0];
             for (int i = 1; i < possibleDrops.Count; i++) {
-                if (possibleDrops[i].percentage == ret.percentage) {
-                    tiedDrops.Add(possibleDrops[i]);
-                }
-
-                if (possibleDrops[i].percentage < ret.percentage) {
-                    ret = possibleDrops[i];
-                    tiedDrops.Clear();
-                    tiedDrops.Add(ret);
+                if (possibleDrops[i].percentage < retDrop.percentage) {
+                    retDrop = possibleDrops[i];
                 }
             }
 
-            // Randomly choose drops with tied drop chance
-            if (tiedDrops.Count > 1) {
-                ret = tiedDrops[Random.Range(0, tiedDrops.Count)];
-            }
-
-            return ret.cSO;
+            // Randomly choose drop from Drop card pool
+            return retDrop.cardDropsPool[Random.Range(0, retDrop.cardDropsPool.Count)];
         }
 
         // Did not roll any drops

@@ -15,7 +15,7 @@ public class EffectController : MonoBehaviour
     void Start() {
         mAnimal = GetComponent<Animal>();
         
-        CombatManager.onTick.AddListener(ExecuteEffects);
+        CombatClock.onTick.AddListener(ExecuteEffects);
     }
 
     void ExecuteEffects() {

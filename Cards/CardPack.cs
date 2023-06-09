@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class CardPack : Card {
     public SO_CardPack cardPackData;
@@ -13,10 +10,12 @@ public class CardPack : Card {
         Setup(cardPackData.name, cardPackData.value, cardPackData.image);
         numCards = cardPackData.numCards;
         dropTable = cardPackData.dropTable;
+        
+        EventManager.Subscribe(gameObject, EventID.SecondaryDown, Open);
     }
 
     // Open card pack, rolling and creating all card drops at once
-    public void Open() {
+    void Open() {
         for (int i = 0; i < numCards; i++) {
             SO_Card cSO = CardFactory.RollDrop(dropTable);
             if (cSO == null) {

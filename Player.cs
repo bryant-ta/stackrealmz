@@ -3,8 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour {
-    public float dragSpeed;
-    
     public Moveable heldCard;
 
     [SerializeField] LayerMask dragLayer;
@@ -18,6 +16,8 @@ public class Player : MonoBehaviour {
                 if (hit.collider.gameObject.TryGetComponent(out Moveable moveable)) {
                     HoldCard(moveable);
                 }
+                
+                // EventManager.Invoke(hit.collider.gameObject, EventID.PrimaryDown);
             }
         }
     }
@@ -27,10 +27,6 @@ public class Player : MonoBehaviour {
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
             if (hit.collider != null) {
-                if (hit.collider.gameObject.TryGetComponent(out CardPack cardPack)) {
-                    cardPack.Open();
-                }
-                
                 EventManager.Invoke(hit.collider.gameObject, EventID.SecondaryDown);
             }
         }
@@ -43,7 +39,9 @@ public class Player : MonoBehaviour {
     void HoldCard(Moveable c) {
         heldCard = c;
         Transform stackTrans = heldCard.PickUp();
-        StartCoroutine(FollowMouse(stackTrans));
+        if (stackTrans) {
+            StartCoroutine(FollowMouse(stackTrans));
+        }
     }
 
     IEnumerator FollowMouse(Transform objTrans) {
@@ -52,7 +50,7 @@ public class Player : MonoBehaviour {
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 100.0f, dragLayer)) {
                 if (hit.collider != null) {
-                    objTrans.position = Vector3.Lerp(objTrans.position, hit.point, dragSpeed*Time.deltaTime);
+                    objTrans.position = Vector3.Lerp(objTrans.position, hit.point, Constants.CardDragSpeed * Time.deltaTime);
                 }
             }
             yield return null;

@@ -9,6 +9,6 @@ public class SO_CardPack : SO_Card {
 
 [System.Serializable]
 public class Drop {
-    public SO_Card cSO;
+    public List<SO_Card> cardDropsPool;
     public int percentage;
 }

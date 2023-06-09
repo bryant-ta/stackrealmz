@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SlotGrid : MonoBehaviour {
@@ -26,11 +24,12 @@ public class SlotGrid : MonoBehaviour {
         }
     }
 
-    public Slot Forward(Slot origin) {
-        return SelectSlot(origin, new Vector2Int(0, 1));
+    public Slot Forward(Slot origin, bool flip) {
+         return SelectSlot(origin, flip, new Vector2Int(1, 0));
     }
 
-    public Slot SelectSlot(Slot origin, Vector2Int relativePos) {
+    public Slot SelectSlot(Slot origin, bool flip, Vector2Int relativePos) {
+        if (flip) relativePos.x = -relativePos.x;
         int targetX = origin.x + relativePos.x;
         int targetY = origin.y + relativePos.y;
 

@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-// Possibly separate crafting from Moveable
 [RequireComponent(typeof(Card))]
 public class Moveable : MonoBehaviour {
     public bool isStackable = true;
-    public float dropSpeed = 1;
     public List<Transform> nearestSnappableObjs = new List<Transform>();
 
     bool isPickedUp;
@@ -18,12 +16,14 @@ public class Moveable : MonoBehaviour {
     // PickUp manipulates this card and any cards under it in a stack.
     // Returns transform of this card's stack after being picked up
     public Transform PickUp() {
-        Transform t = mCard.mStack.PickUp(mCard);
+        if (mCard.mStack.isLocked) return null;
         if (mCard.mSlot) {
-            mCard.mSlot.PickUp();
-            isStackable = true;
+            if (!mCard.mSlot.PickUp()) {
+                return null;    // failed to pickup from slot, such as when card is locked or not enough money to buy
+            }
         }
-
+        
+        Transform t = mCard.mStack.PickUp(mCard);
         SetStackIsPickedUp(true);
 
         return t;
@@ -48,7 +48,7 @@ public class Moveable : MonoBehaviour {
             float d = Vector3.Distance(transform.position, near.transform.position);
             if (near.TryGetComponent(out Card card)) {
                 // Card is not part of my stack and is top card of a stack
-                if (card.mStack != mCard.mStack && card.mStack.GetTopCardObj() == card.gameObject && card.GetComponent<Moveable>().isStackable && d < minDistance) {
+                if (card.mStack != mCard.mStack && card.mStack.GetTopCard() == card && card.GetComponent<Moveable>().isStackable && d < minDistance) {
                     snapSlot = null;
                     minDistance = d;
                     snapCard = card.transform.GetComponent<Card>();
@@ -67,28 +67,46 @@ public class Moveable : MonoBehaviour {
             mCard.mStack.PlaceAll(snapCard.mStack);
 
             foreach (Card c in movedCards) { // Then move each card individually
-                StartCoroutine(FallTo(c.transform, snapCard.mStack.CalculateStackPosition(c)));
+                StartCoroutine(MoveCardToPoint(c, snapCard.mStack.CalculateStackPosition(c)));
             }
         } else if (snapSlot && mCard.mStack.GetStackSize() == 1) {
-            snapSlot.Place(mCard);
-            isStackable = false;
-            StartCoroutine(FallTo(mCard.mStack.transform,
-                new Vector3(snapSlot.transform.position.x, 0.01f, snapSlot.transform.position.z)));
+            snapSlot.PlaceAndMove(mCard.mStack);   // Handles card movement too, for use in non-player movement
         } else {
             mCard.mStack.PlaceAll(null); // No stack manipulations, but need to trigger crafting
-            StartCoroutine(FallTo(mCard.mStack.transform,
-                new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
+            StartCoroutine(MoveStackToPoint(mCard.mStack, new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
         }
     }
-
-    IEnumerator FallTo(Transform obj, Vector3 endPoint) {
-        Vector3 startPos = obj.localPosition;
+    
+    // Actually have a lot of trouble combining with MoveCardToPoint nicely... leaving separate for now for ease of use
+    // prob need to move this out of moveable???
+    public IEnumerator MoveStackToPoint(Stack stack, Vector3 endPoint) {
+        Vector3 startPos = stack.transform.localPosition;
         float t = 0f;
-        while (t < 1 && !isPickedUp) {
-            t += dropSpeed * Time.deltaTime;
-            obj.localPosition = Vector3.Lerp(startPos, endPoint, t);
+
+        stack.isLocked = true;
+        
+        while (t < 1) {
+            t += Constants.CardMoveSpeed * Time.deltaTime;
+            stack.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
             yield return null;
         }
+        
+        stack.isLocked = false;
+    }
+    
+    public IEnumerator MoveCardToPoint(Card card, Vector3 endPoint) {
+        Vector3 startPos = card.transform.localPosition;
+        float t = 0f;
+
+        card.mStack.isLocked = true;
+        
+        while (t < 1) {
+            t += Constants.CardMoveSpeed * Time.deltaTime;
+            card.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
+            yield return null;
+        }
+        
+        card.mStack.isLocked = false;
     }
 
     void OnTriggerEnter(Collider col) {

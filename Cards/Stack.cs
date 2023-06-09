@@ -7,12 +7,11 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class Stack : MonoBehaviour {
-    [SerializeField] float cardPosOffset = 0.2f;
-    
     [SerializeField] List<Card> stack = new List<Card>();
 
     [SerializeField] GameObject craftProgressBar;
     [SerializeField] bool isChanged;
+    public bool isLocked;
 
     public void Place(Card card) {
         AddCard(card);
@@ -27,7 +26,7 @@ public class Stack : MonoBehaviour {
             return;
         }
 
-        MoveCardRange(0, stack.Count, otherStack);
+        MoveCardRangeTo(otherStack, 0, stack.Count);
         otherStack.isChanged = true;
         otherStack.TryCraft();
     }
@@ -57,7 +56,7 @@ public class Stack : MonoBehaviour {
         int splitIndex = stack.IndexOf(card);
         newStack.transform.position = stack[splitIndex].transform.position;
 
-        MoveCardRange(splitIndex, stack.Count - splitIndex, newStack);
+        MoveCardRangeTo(newStack, splitIndex, stack.Count - splitIndex);
 
         return newStack.transform;
     }
@@ -71,7 +70,7 @@ public class Stack : MonoBehaviour {
     
     // must be coroutine for pausing on DoCraftTime
     IEnumerator Craft() {
-        // yield return null;
+        yield return null;  // required for isChanged to register correctly and interrupt crafting
         isChanged = false;
         
         // TODO: TEMP: This is temp way to apply food affects to animals
@@ -141,7 +140,7 @@ public class Stack : MonoBehaviour {
         Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
         // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
         while (craftProgressFill.fillAmount < 1 && !isChanged ) {
-            craftProgressFill.fillAmount += (float) GameManager.TimeSpeed / craftTime * Time.deltaTime;
+            craftProgressFill.fillAmount += (float) GameManager.TimeScale / craftTime * Time.deltaTime;
             yield return null;
         }
 
@@ -155,7 +154,7 @@ public class Stack : MonoBehaviour {
         onCraftFinished(0);
     }
 
-    void MoveCardRange(int startIndex, int count, Stack newStack) {
+    void MoveCardRangeTo(Stack newStack, int startIndex, int count) {
         List<Card> cards = stack.GetRange(startIndex, count);   // Save copy for adding to newStack, RemoveCard() will delete these cards
         foreach (Card c in cards) {
             RemoveCard(c);
@@ -179,8 +178,9 @@ public class Stack : MonoBehaviour {
     }
 
     // GetTopCardObj returns the highest (i.e. has cards under) card in the stack
-    public GameObject GetTopCardObj() {
-        return stack.Last().gameObject;
+    public Card GetTopCard() {
+        if (stack.Count > 0) return stack.Last();
+        return null;
     }
     public List<T> GetComponentsInStack<T>() where T : Component {
         List<T> components = new List<T>();
@@ -222,7 +222,7 @@ public class Stack : MonoBehaviour {
     // CalculateStackPosition returns correct card position according to its stack index
     public Vector3 CalculateStackPosition(Card card) {
         int i = stack.IndexOf(card);
-        return new Vector3(0, 0.01f * i, -cardPosOffset * i);
+        return new Vector3(0, 0.01f * i, -Constants.StackCardPosOffset * i);
     }
     // RecalculateStackPositions moves stack cards to their correct positions according to stack indexes
     public void RecalculateStackPositions() {

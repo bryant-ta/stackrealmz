@@ -5,17 +5,23 @@ using System.Collections.Generic;
 public enum EventID {
     PrimaryDown = 0,    // Input
     SecondaryDown = 1,
-    EnterCombat = 2,    // General - Combat
-    ExitCombat = 3,
-    Heal,           // Health
+    ModifyMoney = 10,   // General 
+    EnterCombat = 101,
+    ExitCombat = 102,
+    StartWave = 103,
+    EndWave = 104,
+    WaveTick = 105,
+    StartBattle = 106,
+    EndBattle = 107,
+    Heal,               // Health
     Damage,
     SetHp,
     SetMaxHp,
     Death,
-    AttackReady,    // Attack
+    AttackReady,        // Attack
     AttackTick,
     SetAttack,
-    AbilityReady,   // Ability
+    AbilityReady,       // Ability
     AbilityTick
 }
 
@@ -39,7 +45,7 @@ public class EventManager : MonoBehaviour {
 
     public static void Subscribe<T>(object ownerObj, EventID eventID, Action<T> listener) {
         Dictionary<EventID, Delegate> thisObjEvents;
-        if (EventManager.eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+        if (eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
             if (thisObjEvents.ContainsKey(eventID)) {
                 // Delegate.Combine adds listeners - similar to event += listener
                 thisObjEvents[eventID] = Delegate.Combine(thisObjEvents[eventID], listener);
@@ -51,12 +57,12 @@ public class EventManager : MonoBehaviour {
         else {
             thisObjEvents = new Dictionary<EventID, Delegate>();
             thisObjEvents[eventID] = listener;
-            EventManager.eventsDict[ownerObj] = thisObjEvents;
+            eventsDict[ownerObj] = thisObjEvents;
         }
     }
     public static void Subscribe(object ownerObj, EventID eventID, Action listener) {
         Dictionary<EventID, Delegate> thisObjEvents;
-        if (EventManager.eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+        if (eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
             if (thisObjEvents.ContainsKey(eventID)) {
                 // Delegate.Combine adds listeners - similar to event += listener
                 thisObjEvents[eventID] = Delegate.Combine(thisObjEvents[eventID], listener);
@@ -68,13 +74,13 @@ public class EventManager : MonoBehaviour {
         else {
             thisObjEvents = new Dictionary<EventID, Delegate>();
             thisObjEvents[eventID] = listener;
-            EventManager.eventsDict[ownerObj] = thisObjEvents;
+            eventsDict[ownerObj] = thisObjEvents;
         }
     }
 
     public static void Unsubscribe<T>(object ownerObj, EventID eventID, Action<T> listener) {
         Dictionary<EventID, Delegate> thisObjEvents;
-        if (EventManager.eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
+        if (eventsDict.TryGetValue(ownerObj, out thisObjEvents)) {
             if (thisObjEvents.ContainsKey(eventID)) {
                 // Delegate.Remove removes listeners - similar to event -= listener
                 thisObjEvents[eventID] = Delegate.Remove(thisObjEvents[eventID], listener);

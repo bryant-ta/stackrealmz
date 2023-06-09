@@ -3,10 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Animal))]  // Must be on same object as Animal for events to register
-public class AnimalUI : MonoBehaviour {
+public class AnimalUI : CardUI {
     public Animal mAnimal;
     
-    public TextMeshProUGUI nameText;
     public TextMeshProUGUI hpText;
     public TextMeshProUGUI attackText;
 
@@ -14,7 +13,7 @@ public class AnimalUI : MonoBehaviour {
     public Image abilityBarFill;
 
     void Start() {
-        nameText.text = mAnimal.animalData.name;
+        base.Start();
         hpText.text = mAnimal.animalData.hp.ToString();
         attackText.text = mAnimal.animalData.atkDmg.ToString();
 
@@ -26,11 +25,11 @@ public class AnimalUI : MonoBehaviour {
         EventManager.Subscribe<int>(gameObject, EventID.SetAttack, UpdateAttackText);
     }
 
-    void UpdateHPText(int n) {
-        hpText.text = n.ToString();
+    void UpdateHPText(int val) {
+        hpText.text = val.ToString();
     }
-    void UpdateAttackText(int n) {
-        attackText.text = n.ToString();
+    void UpdateAttackText(int val) {
+        attackText.text = val.ToString();
     }
     
     void UpdateAttackBar(CombatTickerArgs args) {

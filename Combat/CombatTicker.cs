@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Realtime duration of combat ticker = endTick * CombatManager.realTimeTickDuration
+// Realtime duration of combat ticker = endTick * CombatClock.realTimeTickDuration
 public class CombatTicker {
     public int EndTick => endTick;
     int endTick;
@@ -32,21 +32,26 @@ public class CombatTicker {
     public void Tick(int n = 1) {
         if (curTick >= endTick) {
             curTick = endTick;
+            
             if (autoReset) {
-                EventManager.Invoke(ownerObj, tickerEndEvent);
                 Reset();
-                return;
+            } else {
+                Pause();    // if no autoreset, wait for manual reset at full timer 
             }
-
-            return; // if no autoreset, wait for manual reset at full timer 
+            
+            // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log("invoked");
+            EventManager.Invoke(ownerObj, tickerEndEvent);
+            
+            return; 
         }
         curTick += n;
+        // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log(curTick);
 
         CombatTickerArgs args = new CombatTickerArgs
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
         EventManager.Invoke(ownerObj, tickEvent, args);
     }
-    public void OneTick() { // Required for adding listener to CombatManager, matching delegate signature
+    public void OneTick() { // Required for adding listener to CombatClock, matching delegate signature
         Tick();
     }
     public void UnTick(int n = 1) {
@@ -57,10 +62,6 @@ public class CombatTicker {
         CombatTickerArgs args = new CombatTickerArgs
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
         EventManager.Invoke(ownerObj, tickEvent, args);
-    }
-
-    public bool Ready() {
-        return curTick == endTick;
     }
 
     public void SetEndTick(int n) {
@@ -90,14 +91,21 @@ public class CombatTicker {
         startTick = n;
     }
 
-    public void Start() { CombatManager.onTick.AddListener(OneTick); }
-    public void Pause() { CombatManager.onTick.RemoveListener(OneTick); }
+    public bool Ready() { return curTick == endTick; }
+    
+    public void Start() { 
+        // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log("started");
+        CombatClock.onTick.AddListener(OneTick); }
+    public void Pause() { 
+        // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log("paused");
+        CombatClock.onTick.RemoveListener(OneTick); }
     public void Stop() {
         Reset();
         Pause();
     }
 
     public void Reset() {
+        // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log("reset");
         curTick = startTick;
         CombatTickerArgs args = new CombatTickerArgs
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};

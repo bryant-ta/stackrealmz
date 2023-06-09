@@ -25,31 +25,39 @@ public static class AttackTypeLookUp {
 /********************************************/
 
 public interface IAttack {
-    public void Attack(Slot mSlot, int dmg);
+    // Attack returns true if Attack found valid targets (false if hit no targets, such as at field boundaries)
+    public bool Attack(Slot originSlot, int dmg, bool flip = false);
 }
 
 public class StandardAttack : IAttack
 {
-    public void Attack(Slot mSlot, int dmg) {
-        Slot targetSlot = mSlot.SlotGrid.Forward(mSlot);
+    public bool Attack(Slot originSlot, int dmg, bool flip) {
+        Slot targetSlot = originSlot.SlotGrid.Forward(originSlot, flip);
         
         if (targetSlot && targetSlot.Card) {
             targetSlot.Card.GetComponent<Health>().Damage(dmg);
+            return true;
         }
+
+        return false;
     }
 }
 
 public class SweepAttack : IAttack
 {
-    public void Attack(Slot mSlot, int dmg) {
+    public bool Attack(Slot originSlot, int dmg, bool flip) {
         List<Slot> targetSlots = new List<Slot>();
-        for (int x = -1; x <= 1; x++) {
-            Slot s = mSlot.SlotGrid.SelectSlot(mSlot, new Vector2Int(x, 1));
-            if (s) { targetSlots.Add(s); }
+        for (int y = -1; y <= 1; y++) {
+            Slot s = originSlot.SlotGrid.SelectSlot(originSlot, flip, new Vector2Int(1, y));
+            if (s && s.Card) { targetSlots.Add(s); }
         }
+
+        if (targetSlots.Count == 0) return false;
 
         foreach (Slot s in targetSlots) {
             s.Card.GetComponent<Health>().Damage(dmg);
         }
+
+        return true;
     }
 }
