@@ -45,8 +45,6 @@ public class EffectController : MonoBehaviour
     // AddEffectPerm executes a permanent effect on mAnimal
     public void AddEffectPerm(Effect e) {
         if (e.remainingDuration > 0 || e.overTime) { Debug.LogError("AddEffectPerm(): trying to add non-permanent effect");}
-        print(e.effect);
-        print(EffectTypeLookUp.LookUp[EffectType.ModifyBaseAttackEffect]);
         e.effect.Execute(mAnimal, e.baseValue);
     }
 }

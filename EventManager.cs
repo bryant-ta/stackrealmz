@@ -5,24 +5,31 @@ using System.Collections.Generic;
 public enum EventID {
     PrimaryDown = 0,    // Input
     SecondaryDown = 1,
-    ModifyMoney = 10,   // General 
+    ModifyMoney = 10,   // General
+    ModifyLife = 11,
+    ModifyMaxLife = 12,
+    WonGame = 30,
+    LostGame = 31,
     EnterCombat = 101,
     ExitCombat = 102,
     StartWave = 103,
     EndWave = 104,
     WaveTick = 105,
     StartBattle = 106,
-    EndBattle = 107,
-    Heal,               // Health
-    Damage,
-    SetHp,
-    SetMaxHp,
-    Death,
-    AttackReady,        // Attack
-    AttackTick,
-    SetAttack,
-    AbilityReady,       // Ability
-    AbilityTick
+    WonBattle = 107,
+    LostBattle = 108,
+    Heal = 201,               // Health
+    Damage = 202,
+    SetHp = 203,
+    SetMaxHp = 204,
+    Death = 205,
+    AnimalDied = 210,
+    EnemyDied = 211,
+    AttackReady = 220,        // Attack
+    AttackTick = 221,
+    SetAttack = 222,
+    AbilityReady = 230,       // Ability
+    AbilityTick = 231,
 }
 
 public class EventManager : MonoBehaviour {

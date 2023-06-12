@@ -133,14 +133,14 @@ public class Stack : MonoBehaviour {
 
     IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
         // TODO: If this slow, make this pooled
-        GameObject barObj = Instantiate(craftProgressBar, GameManager.WorldCanvas.gameObject.transform);
+        GameObject barObj = Instantiate(craftProgressBar, GameManager.Instance.WorldCanvas.gameObject.transform);
         barObj.transform.position =
             new Vector3(transform.position.x, 0, transform.position.z + 0.75f);
 
         Image craftProgressFill = barObj.transform.GetChild(0).GetComponent<Image>();
         // Fill bar over <craftTime> seconds. Interrupted by being pickedup and placed on
         while (craftProgressFill.fillAmount < 1 && !isChanged ) {
-            craftProgressFill.fillAmount += (float) GameManager.TimeScale / craftTime * Time.deltaTime;
+            craftProgressFill.fillAmount += (float) GameManager.Instance.TimeScale / craftTime * Time.deltaTime;
             yield return null;
         }
 

@@ -4,8 +4,8 @@ public class CombatSlot : Slot
 {
     public Terrain terrain;
     
-    public override bool PlaceAndMove(Stack stack) {
-        if (!base.PlaceAndMove(stack)) return false;
+    public override bool PlaceAndMove(Stack stack, bool overrideIsLocked = false) {
+        if (!base.PlaceAndMove(stack, overrideIsLocked)) return false;
 
         if (Card.TryGetComponent(out Animal animal) && !animal.isInCombat) {
             animal.StartCombatState();
@@ -14,8 +14,9 @@ public class CombatSlot : Slot
         return true;
     }
 
-    public override Transform PickUp() {
-        Transform ret = base.PickUp();
+    public override Transform PickUp(bool isPlayerCalled = false) {
+        Transform ret = base.PickUp(isPlayerCalled);
+        if (ret == null) return null;
         
         if (ret.TryGetComponent(out Animal animal)) {
             animal.EndCombatState();

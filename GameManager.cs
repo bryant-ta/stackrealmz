@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,21 +10,27 @@ public class GameManager : MonoBehaviour {
     public static GameManager Instance => _instance;
     static GameManager _instance;
 
-    public static Canvas WorldCanvas { get; private set; }
+    public Canvas WorldCanvas => _worldCanvas;
     [SerializeField] Canvas _worldCanvas;
 
     public List<Card> cards;
     public List<Food> foods;
     public List<Animal> animals;
+    public List<Animal> enemies;
 
     // Time Vars
-    public static int TimeScale = 1;
+    public int TimeScale => _timeScale;
+    [SerializeField] int _timeScale;
     public int dayDuration = 1;
     public int nightDuration = 1;
     public Image timeBarFill;
+    
+    // Life Vars
+    public Health playerLife;
 
     // Money Vars
-    public int Money { get; private set; }
+    public int Money => _money;
+    [SerializeField] int _money;
 
     // Events
     public static UnityEvent onDayEnd = new UnityEvent();
@@ -40,11 +45,11 @@ public class GameManager : MonoBehaviour {
         } else {
             _instance = this;
         }
-
-        WorldCanvas = _worldCanvas;
     }
 
     void Start() {
+        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, LostGame);
+        
         StartCoroutine(GameLoop());
 
         // Debug
@@ -80,21 +85,30 @@ public class GameManager : MonoBehaviour {
         // }
     }
 
+    void WonGame() {
+        
+    }
+    
+    void LostGame() {
+        print("YOU LOST THE GAME");
+        EventManager.Invoke(gameObject, EventID.LostGame);
+    }
+    
     // Usage in inspector by time buttons
-    public static void SetTimeSpeed(int n) {
+    public void SetTimeSpeed(int n) {
         if (n >= 0) {
-            TimeScale = n;
+            _timeScale = n;
         }
     }
 
     public bool ModifyMoney(int value) {
-        int newMoney = Money + value;
+        int newMoney = _money + value;
         if (newMoney < 0) {
             return false;
         }
 
-        Money = newMoney;
-        EventManager.Invoke(gameObject, EventID.ModifyMoney, Money);
+        _money = newMoney;
+        EventManager.Invoke(gameObject, EventID.ModifyMoney, _money);
         
         return true;
     }

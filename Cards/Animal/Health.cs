@@ -1,13 +1,16 @@
 using UnityEngine;
 
 public class Health : MonoBehaviour {
-    public int maxHp;
     public int hp;
+    public int maxHp;
 
     void Start() {
         if (TryGetComponent(out Animal a)) {
             SetMaxHp(a.animalData.hp);
             SetHp(a.animalData.hp);
+        } else {
+            SetMaxHp(maxHp);
+            SetHp(hp);
         }
     }
 

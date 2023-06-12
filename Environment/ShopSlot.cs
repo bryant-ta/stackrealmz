@@ -10,18 +10,13 @@ public class ShopSlot : Slot
     void Start() {
         Restock();
     }
-    
-    public override bool PlaceAndMove(Stack stack) {
-        return false;
-    }
 
-    public override Transform PickUp() {
-        if (GameManager.Instance.Money < price) {
-            return null;
-        }
+    public override Transform PickUp(bool isPlayerCalled = false) {
+        if (GameManager.Instance.Money < price) return null;
         GameManager.Instance.ModifyMoney(-price);
         
         Transform ret = base.PickUp();
+        if (ret == null) return null;
         
         Restock();
 
@@ -35,6 +30,8 @@ public class ShopSlot : Slot
             base.PlaceAndMove(s);
 
             if (remainingQuantity > 0) remainingQuantity--;
+        } else {
+            isLocked = true;
         }
     }
 }

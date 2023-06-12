@@ -34,9 +34,14 @@ public class StandardAttack : IAttack
     public bool Attack(Slot originSlot, int dmg, bool flip) {
         Slot targetSlot = originSlot.SlotGrid.Forward(originSlot, flip);
         
-        if (targetSlot && targetSlot.Card) {
-            targetSlot.Card.GetComponent<Health>().Damage(dmg);
-            return true;
+        if (targetSlot) {
+            if (targetSlot.Card) {
+                targetSlot.Card.GetComponent<Health>().Damage(dmg);
+                return true;
+            } else if (targetSlot.x == 0) {
+                GameManager.Instance.playerLife.Damage(dmg);
+                return true;
+            }
         }
 
         return false;
@@ -48,16 +53,21 @@ public class SweepAttack : IAttack
     public bool Attack(Slot originSlot, int dmg, bool flip) {
         List<Slot> targetSlots = new List<Slot>();
         for (int y = -1; y <= 1; y++) {
-            Slot s = originSlot.SlotGrid.SelectSlot(originSlot, flip, new Vector2Int(1, y));
-            if (s && s.Card) { targetSlots.Add(s); }
+            Slot targetSlot = originSlot.SlotGrid.SelectSlot(originSlot, flip, new Vector2Int(1, y));
+            if (targetSlot) { targetSlots.Add(targetSlot); }
         }
 
-        if (targetSlots.Count == 0) return false;
-
-        foreach (Slot s in targetSlots) {
-            s.Card.GetComponent<Health>().Damage(dmg);
+        bool didHit = false;
+        foreach (Slot targetSlot in targetSlots) {
+            if (targetSlot.Card) {
+                targetSlot.Card.GetComponent<Health>().Damage(dmg);
+                didHit = true;
+            } else if (targetSlot.x == 0) {
+                GameManager.Instance.playerLife.Damage(dmg);
+                didHit = true;
+            }
         }
 
-        return true;
+        return didHit;
     }
 }

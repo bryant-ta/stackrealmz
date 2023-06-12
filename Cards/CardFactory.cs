@@ -80,6 +80,7 @@ public class CardFactory : MonoBehaviour {
         Animal a = Instantiate(_animalBase).GetComponent<Animal>();
         a.animalData = aSO;
         a.isEnemy = true;
+        
         s.Place(a);
 
         return s;

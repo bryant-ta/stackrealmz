@@ -1,8 +1,8 @@
-using System.Collections;
 using UnityEngine;
 
 public class Slot : MonoBehaviour {
     public int x, y;
+    public bool isLocked;
 
     public Card Card { get { return card; } private set { card = value; } }
     [SerializeField] protected Card card;
@@ -12,8 +12,8 @@ public class Slot : MonoBehaviour {
 
     // PlaceAndMove handles registering a stack with the slot and physically moving stack's location to this Slot
     // Slots only allow stacks of one card (for now?)
-    public virtual bool PlaceAndMove(Stack stack) {
-        if (!IsEmpty() || stack.GetStackSize() != 1) { return false; }
+    public virtual bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
+        if (!IsEmpty() || (isPlayerCalled && isLocked) || stack.GetStackSize() != 1) { return false; }
 
         card = stack.GetTopCard();
 
@@ -27,12 +27,14 @@ public class Slot : MonoBehaviour {
             m.isStackable = false;
         }
 
-        StartCoroutine(card.GetComponent<Moveable>().MoveStackToPoint(stack, CalculateCardPosition()));
+        StartCoroutine(Utils.MoveStackToPoint(stack, CalculateCardPosition()));
 
         return true;
     }
 
-    public virtual Transform PickUp() {
+    public virtual Transform PickUp(bool isPlayerCalled = false) {
+        if (isPlayerCalled && isLocked) return null;
+        
         Card c = card;
         card.mSlot = null;
         card = null;

@@ -18,6 +18,6 @@ public class CombatClock : MonoBehaviour {
             onTick.Invoke();
         }
 
-        timer += GameManager.TimeScale * Time.deltaTime;
+        timer += GameManager.Instance.TimeScale * Time.deltaTime;
     }
 }

@@ -18,7 +18,7 @@ public class Moveable : MonoBehaviour {
     public Transform PickUp() {
         if (mCard.mStack.isLocked) return null;
         if (mCard.mSlot) {
-            if (!mCard.mSlot.PickUp()) {
+            if (!mCard.mSlot.PickUp(true)) {
                 return null;    // failed to pickup from slot, such as when card is locked or not enough money to buy
             }
         }
@@ -62,51 +62,27 @@ public class Moveable : MonoBehaviour {
             }
         }
 
+        // Snap to stack
         if (snapCard) {
             List<Card> movedCards = mCard.mStack.GetStack(); // Save copy since PlaceAll will delete parent stack object
             mCard.mStack.PlaceAll(snapCard.mStack);
 
             foreach (Card c in movedCards) { // Then move each card individually
-                StartCoroutine(MoveCardToPoint(c, snapCard.mStack.CalculateStackPosition(c)));
+                StartCoroutine(Utils.MoveCardToPoint(c, snapCard.mStack.CalculateStackPosition(c)));
             }
-        } else if (snapSlot && mCard.mStack.GetStackSize() == 1) {
-            snapSlot.PlaceAndMove(mCard.mStack);   // Handles card movement too, for use in non-player movement
-        } else {
-            mCard.mStack.PlaceAll(null); // No stack manipulations, but need to trigger crafting
-            StartCoroutine(MoveStackToPoint(mCard.mStack, new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
-        }
-    }
-    
-    // Actually have a lot of trouble combining with MoveCardToPoint nicely... leaving separate for now for ease of use
-    // prob need to move this out of moveable???
-    public IEnumerator MoveStackToPoint(Stack stack, Vector3 endPoint) {
-        Vector3 startPos = stack.transform.localPosition;
-        float t = 0f;
-
-        stack.isLocked = true;
-        
-        while (t < 1) {
-            t += Constants.CardMoveSpeed * Time.deltaTime;
-            stack.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
-            yield return null;
+            return;
         }
         
-        stack.isLocked = false;
-    }
-    
-    public IEnumerator MoveCardToPoint(Card card, Vector3 endPoint) {
-        Vector3 startPos = card.transform.localPosition;
-        float t = 0f;
-
-        card.mStack.isLocked = true;
-        
-        while (t < 1) {
-            t += Constants.CardMoveSpeed * Time.deltaTime;
-            card.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
-            yield return null;
+        // Snap to Slot
+        if (snapSlot && mCard.mStack.GetStackSize() == 1) {
+            if (snapSlot.PlaceAndMove(mCard.mStack, true)) { // Handles card movement too
+                return;
+            }
         }
         
-        card.mStack.isLocked = false;
+        // Fall to floor
+        mCard.mStack.PlaceAll(null); // No stack manipulations, but need to trigger crafting
+        StartCoroutine(Utils.MoveStackToPoint(mCard.mStack, new Vector3(mCard.mStack.transform.position.x, 0, mCard.mStack.transform.position.z)));
     }
 
     void OnTriggerEnter(Collider col) {

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
@@ -44,10 +45,17 @@ public class Animal : Card {
         int dmg = atkDmg.Value * terrainModifier;
 
         if (!attack.Attack(mSlot, dmg, isEnemy)) {
-            CombatSlot targetMoveSlot = curCombatSlot.SlotGrid.Forward(curCombatSlot, isEnemy) as CombatSlot;
-            if (targetMoveSlot) {
-                targetMoveSlot.PlaceAndMove(mStack);
-            }
+            // If did not attack anything, move forward one space
+            Step();
+            attack.Attack(mSlot, dmg, isEnemy);
+        }
+    }
+
+    void Step() {
+        CombatSlot curCombatSlot = mSlot as CombatSlot;
+        CombatSlot targetMoveSlot = curCombatSlot.SlotGrid.Forward(curCombatSlot, isEnemy) as CombatSlot;
+        if (targetMoveSlot) {
+            targetMoveSlot.PlaceAndMove(mStack);
         }
     }
 
@@ -61,8 +69,14 @@ public class Animal : Card {
 
     void Death() {
         print("Ahhh I ded");
-        mStack.Extract(this);
-        // Destroy(gameObject);
+        
+        // mStack.Extract(this);
+        mSlot.PickUp();
+        if (isEnemy) {
+            EventManager.Invoke(WaveManager.Instance.gameObject, EventID.EnemyDied);
+        }
+
+        Destroy(gameObject);
     }
     
     public void StartCombatState() {
@@ -83,11 +97,21 @@ public class Animal : Card {
         EventManager.Invoke(gameObject, EventID.ExitCombat);
     }
 
-    void OnEnable() { GameManager.Instance.animals.Add(this); }
+    void OnEnable() {
+        StartCoroutine(RegisterAnimal());
+    }
     void OnDisable() {
-        GameManager.Instance.animals.Remove(this);
+        if (isEnemy) GameManager.Instance.enemies.Remove(this);
+        else GameManager.Instance.animals.Remove(this);
+        
         if (attackTicker != null) attackTicker.Stop();
         if (abilityTicker != null) abilityTicker.Stop();
+    }
+
+    IEnumerator RegisterAnimal() {
+        yield return null;      // required for isEnemy to be set during CardFactory.CreateAnimal()
+        if (isEnemy) GameManager.Instance.enemies.Add(this);
+        else GameManager.Instance.animals.Add(this);
     }
 
     // Old but keeping for solution ideas:
