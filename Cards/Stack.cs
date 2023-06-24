@@ -94,28 +94,28 @@ public class Stack : MonoBehaviour {
 
         if (craftFinished == 1 && !isChanged) {
             // Create recipe products
-            if (validRecipe.dropTable.Count > 0) {
-                for (int i = 0; i < validRecipe.numDrops; i++) {
-                    SO_Card cSO = CardFactory.RollDrop(validRecipe.dropTable);
+            if (validRecipe.randomProducts.Count > 0) {
+                for (int i = 0; i < validRecipe.numRandomProducts; i++) {
+                    SO_Card cSO = CardFactory.RollDrop(validRecipe.randomProducts);
                     if (cSO == null) {
                         continue;
                     }
 
                     Stack s = CardFactory.CreateStack(cSO);
-                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.numDrops,
+                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.numRandomProducts,
                         Constants.CardCreationRadius, transform.position);
                 }
             } else {
-                for (int i = 0; i < validRecipe.products.Length; i++) {
+                for (int i = 0; i < validRecipe.products.Count; i++) {
                     Stack s = CardFactory.CreateStack(validRecipe.products[i]);
-                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.products.Length,
+                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.products.Count,
                         Constants.CardCreationRadius, transform.position);
                 }
             }
             
-            if (validRecipe.keepMaterials.Length > 0) {     // Keep cards marked by recipe
+            if (validRecipe.reusableMaterials.Length > 0) {     // Keep cards marked by recipe
                 foreach (Card c in stack.ToList()) {
-                    if (validRecipe.keepMaterials.Contains(c.name)) {
+                    if (validRecipe.reusableMaterials.Contains(c.name)) {
                         continue;
                     }
                     
@@ -225,9 +225,17 @@ public class Stack : MonoBehaviour {
         return new Vector3(0, 0.01f * i, -Constants.StackCardPosOffset * i);
     }
     // RecalculateStackPositions moves stack cards to their correct positions according to stack indexes
-    public void RecalculateStackPositions() {
+    void RecalculateStackPositions() {
         foreach (Card c in stack) {
             c.transform.localPosition = CalculateStackPosition(c);
         }
+    }
+
+    public int TotalValue() {
+        int total = 0;
+        foreach (Card card in stack) {
+            total += card.value;
+        }
+        return total;
     }
 }

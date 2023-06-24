@@ -18,8 +18,6 @@ public class SlotGrid : MonoBehaviour {
                     Debug.LogError("Two slots have same coordinates");
                 }
                 slotGrid[s.x, s.y] = s;
-            } else {
-                Debug.LogError("Non-Slot object in SlotGrid children");
             }
         }
     }

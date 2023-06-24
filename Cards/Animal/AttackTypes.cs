@@ -26,46 +26,30 @@ public static class AttackTypeLookUp {
 
 public interface IAttack {
     // Attack returns true if Attack found valid targets (false if hit no targets, such as at field boundaries)
-    public bool Attack(Slot originSlot, int dmg, bool flip = false);
+    public bool Attack(Slot originSlot, int dmg, bool isEnemy = false);
 }
 
 public class StandardAttack : IAttack
 {
-    public bool Attack(Slot originSlot, int dmg, bool flip) {
-        Slot targetSlot = originSlot.SlotGrid.Forward(originSlot, flip);
-        
-        if (targetSlot) {
-            if (targetSlot.Card) {
-                targetSlot.Card.GetComponent<Health>().Damage(dmg);
-                return true;
-            } else if (targetSlot.x == 0) {
-                GameManager.Instance.playerLife.Damage(dmg);
-                return true;
-            }
-        }
+    public bool Attack(Slot originSlot, int dmg, bool isEnemy) {
+        Slot targetSlot = originSlot.SlotGrid.Forward(originSlot, isEnemy);
 
-        return false;
+        return Utils.ExecuteDamage(targetSlot, dmg, isEnemy);
     }
 }
 
 public class SweepAttack : IAttack
 {
-    public bool Attack(Slot originSlot, int dmg, bool flip) {
+    public bool Attack(Slot originSlot, int dmg, bool isEnemy) {
         List<Slot> targetSlots = new List<Slot>();
         for (int y = -1; y <= 1; y++) {
-            Slot targetSlot = originSlot.SlotGrid.SelectSlot(originSlot, flip, new Vector2Int(1, y));
-            if (targetSlot) { targetSlots.Add(targetSlot); }
+            targetSlots.Add(originSlot.SlotGrid.SelectSlot(originSlot, isEnemy, new Vector2Int(1, y)));
         }
 
         bool didHit = false;
         foreach (Slot targetSlot in targetSlots) {
-            if (targetSlot.Card) {
-                targetSlot.Card.GetComponent<Health>().Damage(dmg);
-                didHit = true;
-            } else if (targetSlot.x == 0) {
-                GameManager.Instance.playerLife.Damage(dmg);
-                didHit = true;
-            }
+            bool ret = Utils.ExecuteDamage(targetSlot, dmg, isEnemy);
+            if (!didHit && !ret) didHit = true;
         }
 
         return didHit;

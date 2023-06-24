@@ -18,7 +18,7 @@ public class Moveable : MonoBehaviour {
     public Transform PickUp() {
         if (mCard.mStack.isLocked) return null;
         if (mCard.mSlot) {
-            if (!mCard.mSlot.PickUp(true)) {
+            if (mCard.mSlot.PickUp(true) == null) {
                 return null;    // failed to pickup from slot, such as when card is locked or not enough money to buy
             }
         }
@@ -74,10 +74,8 @@ public class Moveable : MonoBehaviour {
         }
         
         // Snap to Slot
-        if (snapSlot && mCard.mStack.GetStackSize() == 1) {
-            if (snapSlot.PlaceAndMove(mCard.mStack, true)) { // Handles card movement too
-                return;
-            }
+        if (snapSlot && snapSlot.PlaceAndMove(mCard.mStack, true)) { // Handles card movement too
+            return;
         }
         
         // Fall to floor

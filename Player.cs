@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,7 +8,13 @@ public class Player : MonoBehaviour {
 
     [SerializeField] LayerMask dragLayer;
     [SerializeField] LayerMask cardLayer;
+
+    CameraController mainCameraCtrl;
     
+    void Start() {
+        mainCameraCtrl = Camera.main.GetComponent<CameraController>();
+    }
+
     void OnPrimaryDown() {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
@@ -36,10 +43,17 @@ public class Player : MonoBehaviour {
         DropCard(heldCard);
     }
 
+    void OnCameraZoom() {
+        mainCameraCtrl.ZoomToggle();
+    }
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     void HoldCard(Moveable c) {
-        heldCard = c;
-        Transform stackTrans = heldCard.PickUp();
+        Transform stackTrans = c.PickUp();
         if (stackTrans) {
+            heldCard = c;
             StartCoroutine(FollowMouse(stackTrans));
         }
     }

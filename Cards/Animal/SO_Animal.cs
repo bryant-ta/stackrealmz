@@ -9,7 +9,7 @@ public class SO_Animal : SO_Card {
     public int ablCd;
 
     public AttackType atkType;
-    public AbilityType abilityType;
+    public AbilityType ablType;
     
     public Terrain terrainPref;
 }

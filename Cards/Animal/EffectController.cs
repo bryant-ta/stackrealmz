@@ -20,7 +20,7 @@ public class EffectController : MonoBehaviour
 
     void ExecuteEffects() {
         foreach (Effect e in curEffects.ToList()) {
-            print(e.name + " " + e.remainingDuration);
+            // print(e.name + " " + e.remainingDuration);
             if (e.overTime) {
                 e.effect.Execute(mAnimal, e.baseValue);
             }

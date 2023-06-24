@@ -19,6 +19,8 @@ public static class Utils
         stack.isLocked = true;
         
         while (t < 1) {
+            if (stack == null) { yield break; }
+            
             t += Constants.CardMoveSpeed * Time.deltaTime;
             stack.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
             yield return null;
@@ -30,15 +32,29 @@ public static class Utils
     public static IEnumerator MoveCardToPoint(Card card, Vector3 endPoint) {
         Vector3 startPos = card.transform.localPosition;
         float t = 0f;
-
-        card.mStack.isLocked = true;
         
         while (t < 1) {
+            if (card.mStack == null) { yield break; }
+            
             t += Constants.CardMoveSpeed * Time.deltaTime;
             card.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
             yield return null;
         }
-        
-        card.mStack.isLocked = false;
+    }
+
+    // ExecuteDamage is a helper func for IAttack handling dealing damage to a valid target
+    public static bool ExecuteDamage(Slot targetSlot, int dmg, bool originIsEnemy) {
+        if (targetSlot) {
+            // Origin and target cards are on different teams
+            if (targetSlot.Card && (originIsEnemy != targetSlot.Card.isEnemy)) {
+                targetSlot.Card.GetComponent<Health>().Damage(dmg);
+                return true;
+            } else if (targetSlot.x == 0 && originIsEnemy) {
+                GameManager.Instance.playerLife.Damage(dmg);
+                return true;
+            }
+        }
+
+        return false;
     }
 }

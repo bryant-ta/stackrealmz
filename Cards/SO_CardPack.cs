@@ -6,9 +6,3 @@ public class SO_CardPack : SO_Card {
     public int numCards;
     public List<Drop> dropTable;
 }
-
-[System.Serializable]
-public class Drop {
-    public List<SO_Card> cardDropsPool;
-    public int percentage;
-}
