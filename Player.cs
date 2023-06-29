@@ -1,10 +1,9 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour {
-    public Moveable heldCard;
+    [SerializeField] Moveable heldMoveable;
 
     [SerializeField] LayerMask dragLayer;
     [SerializeField] LayerMask cardLayer;
@@ -15,13 +14,13 @@ public class Player : MonoBehaviour {
         mainCameraCtrl = Camera.main.GetComponent<CameraController>();
     }
 
-    void OnPrimaryDown() {
+    public void OnPrimaryDown() {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
             if (hit.collider != null) {
                 if (hit.collider.gameObject.TryGetComponent(out Moveable moveable)) {
-                    HoldCard(moveable);
+                    HoldMoveable(moveable);
                 }
                 
                 // EventManager.Invoke(hit.collider.gameObject, EventID.PrimaryDown);
@@ -29,7 +28,7 @@ public class Player : MonoBehaviour {
         }
     }
     
-    void OnSecondaryDown() {
+    public void OnSecondaryDown() {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
@@ -39,27 +38,32 @@ public class Player : MonoBehaviour {
         }
     }
     
-    void OnPrimaryUp() {
-        DropCard(heldCard);
+    public void OnPrimaryUp() {
+        DropMoveable(heldMoveable);
     }
 
-    void OnCameraZoom() {
+    // public void OnPan()
+    // {
+    //     mainCameraCtrl.DragAndMove(context);
+    // }
+
+    public void OnCameraZoom() {
         mainCameraCtrl.ZoomToggle();
     }
-    
+
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    void HoldCard(Moveable c) {
+    void HoldMoveable(Moveable c) {
         Transform stackTrans = c.PickUp();
         if (stackTrans) {
-            heldCard = c;
+            heldMoveable = c;
             StartCoroutine(FollowMouse(stackTrans));
         }
     }
 
     IEnumerator FollowMouse(Transform objTrans) {
-        while (heldCard != null) {
+        while (heldMoveable != null) {
             Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 100.0f, dragLayer)) {
@@ -71,10 +75,10 @@ public class Player : MonoBehaviour {
         }
     }
 
-    void DropCard(Moveable c) {
-        if (heldCard != null) {
-            heldCard.Drop();
+    void DropMoveable(Moveable c) {
+        if (heldMoveable != null) {
+            heldMoveable.Drop();
         }
-        heldCard = null;
+        heldMoveable = null;
     }
 }

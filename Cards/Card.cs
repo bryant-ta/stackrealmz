@@ -9,7 +9,6 @@ public class Card : MonoBehaviour {
 
     public Stack mStack;
     public Slot mSlot;
-    public bool isEnemy;
 
     public void Start() { Setup(cardData.name, cardData.value, cardData.image); }
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -27,8 +26,12 @@ public class CardFactory : MonoBehaviour {
     public GameObject cardPackBase;
     public static GameObject _cardPackBase;
     
+    public GameObject sheetBase;
+    public static GameObject _sheetBase;
+    
     public GameObject stackBase;
     public static GameObject _stackBase;
+
     public List<Recipe> recipes;
     public static List<Recipe> _recipes;
 
@@ -37,11 +40,12 @@ public class CardFactory : MonoBehaviour {
         _foodBase = foodBase;
         _animalBase = animalBase;
         _cardPackBase = cardPackBase;
+
+        _sheetBase = sheetBase;
         
         _stackBase = stackBase;
+        
         _recipes = recipes;
-
-        LoadRecipes();
     }
 
     /*
@@ -78,6 +82,12 @@ public class CardFactory : MonoBehaviour {
         return s;
     }
 
+    public static Sheet CreateSheet(SO_Sheet sSO) {
+        Sheet s = Instantiate(_sheetBase).GetComponent<Sheet>();
+        s.sheetData = sSO;
+        return s;
+    }
+
     public static Stack CreateEnemy(SO_Animal aSO) {
         Stack s = Instantiate(_stackBase).GetComponent<Stack>();
         Animal a = Instantiate(_animalBase).GetComponent<Animal>();
@@ -98,49 +108,6 @@ public class CardFactory : MonoBehaviour {
         }
 
         return null;
-    }
-
-    void LoadRecipes()
-    {
-        string[] assetPaths = AssetDatabase.FindAssets("t:SO_Recipe", new[] { Constants.RecipeDataPath });
-        if (assetPaths.Length <= 0) {
-            Debug.LogError("Unable to find any recipes");
-            return;
-        }
-        
-        for (int i = 0; i < assetPaths.Length; i++)
-        {
-            string assetPath = AssetDatabase.GUIDToAssetPath(assetPaths[i]);
-            SO_Recipe recipeData = AssetDatabase.LoadAssetAtPath<SO_Recipe>(assetPath);
-
-            Recipe recipe = new Recipe {
-                id = recipeData.id,
-                products = recipeData.products,
-                materials = recipeData.materials,
-                reusableMaterials = recipeData.reusableMaterials,
-                craftTime = recipeData.craftTime,
-                randomProducts = recipeData.randomProducts,
-                numRandomProducts = recipeData.numRandomProducts
-            };
-
-            _recipes.Add(recipe);
-        }
-    }
-    
-    
-    List<SO_Recipe> FindAllSORecipes() {
-        string[] searchPaths = {"Assets/SO/Recipes"};
-        List<SO_Recipe> recipeDatas = new List<SO_Recipe>();
-        
-        string[] guids = AssetDatabase.FindAssets("t:SO_Recipe", searchPaths);
-        foreach (string guid in guids) {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            SO_Recipe card = AssetDatabase.LoadAssetAtPath<SO_Recipe>(path);
-
-            if (card != null) recipeDatas.Add(card);
-        }
-
-        return recipeDatas;
     }
     
     /*

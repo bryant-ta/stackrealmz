@@ -15,6 +15,7 @@ public class Animal : Card {
     IAbility ability;
     CombatTicker abilityTicker;
 
+    public bool isEnemy;
     public bool isInCombat;
 
     void Start() {
@@ -25,46 +26,37 @@ public class Animal : Card {
         ablPwr = new Stat(animalData.ablPwr);
 
         attack = AttackTypeLookUp.LookUp[animalData.atkType];
-        ability = AbilityTypeLookUp.LookUp[animalData.ablType];
+        ability = AbilityTypeLookUp.LookUp[animalData.abilityType];
         
-        EventManager.Subscribe(gameObject, EventID.Death, () => StartCoroutine(Death()));
-        EventManager.Subscribe(gameObject, EventID.AttackReady, () => StartCoroutine(Attack()));
+        EventManager.Subscribe(gameObject, EventID.Death, Death);
+        EventManager.Subscribe(gameObject, EventID.AttackReady, Attack);
         EventManager.Subscribe(gameObject, EventID.SecondaryDown, Ability);
     }
 
-    IEnumerator Attack() {
+    void Attack() {
+        int terrainModifier = 1;
         CombatSlot curCombatSlot = mSlot as CombatSlot;
         if (!curCombatSlot) {
             Debug.LogErrorFormat("Current slot of %s is not type CombatSlot. Attack failed.", name);
-            yield break;
+            return;
         }
 
-        int terrainModifier = 1;
         if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
         int dmg = atkDmg.Value * terrainModifier;
 
         if (!attack.Attack(mSlot, dmg, isEnemy)) {
-            // Tries claiming target move slot, then wait for claims to resolve from other cards
-            // Interesting mechanic that rose from this: card that didnt get to move loses a turn!
-            CombatSlot targetMoveSlot = curCombatSlot.SlotGrid.Forward(curCombatSlot, isEnemy) as CombatSlot;
-            if (targetMoveSlot && targetMoveSlot.RegisterMovementClaim(this)) {
-                yield return null;
-            }
-
-            if (Step(targetMoveSlot)) {       // If did not attack anything, try move forward one space
-                attackTicker.forceEndTick = false;
-                attack.Attack(mSlot, dmg, isEnemy);
-            } else {            // If could not move, set ticker to full to try attack or move next tick
-                attackTicker.SetCurTick(attackTicker.EndTick);
-            }
+            // If did not attack anything, move forward one space
+            Step();
+            attack.Attack(mSlot, dmg, isEnemy);
         }
     }
 
-    bool Step(CombatSlot targetMoveSlot) {
-        if (targetMoveSlot && targetMoveSlot.CheckMovementClaim(this) && targetMoveSlot.PlaceAndMove(mStack)) {
-            return true;
+    void Step() {
+        CombatSlot curCombatSlot = mSlot as CombatSlot;
+        CombatSlot targetMoveSlot = curCombatSlot.SlotGrid.Forward(curCombatSlot, isEnemy) as CombatSlot;
+        if (targetMoveSlot) {
+            targetMoveSlot.PlaceAndMove(mStack);
         }
-        return false;
     }
 
     public void Ability() {
@@ -75,14 +67,15 @@ public class Animal : Card {
         }
     }
 
-    // Death delays a death cleanup until the next frame, to allow finishing code execution
-    IEnumerator Death() {
-        yield return null;
+    void Death() {
+        print("Ahhh I ded");
         
-        mSlot.PickUp();     // Note: calls child class PickUp (i.e. CombatSlot.Pickup) if mSlot is actually child class
+        // mStack.Extract(this);
+        mSlot.PickUp();
         if (isEnemy) {
             EventManager.Invoke(WaveManager.Instance.gameObject, EventID.EnemyDied);
         }
+
         Destroy(gameObject);
     }
     

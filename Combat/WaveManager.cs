@@ -58,21 +58,16 @@ public class WaveManager : MonoBehaviour {
 
     public void WonBattle() {
         CleanUp();
-        GameManager.Instance.ModifyMoney(battle.TotalValue());
-        
         EventManager.Invoke(gameObject, EventID.WonBattle);
     }
 
     public void LostBattle() {
         CleanUp();
-        
         EventManager.Invoke(gameObject, EventID.LostBattle);
     }
 
     void CleanUp() {
-        // Reset combat state
         inBattle = false;
-        curWaveNum = 0;
         foreach (CombatSlot slot in playSlots) {
             slot.isLocked = true;
         }
@@ -106,10 +101,7 @@ public class WaveManager : MonoBehaviour {
                 }
             }
         }
-
-        if (gatheredStack) {
-            StartCoroutine(Utils.MoveStackToPoint(gatheredStack, cleanUpDepositPoint.position));
-        }
+        StartCoroutine(Utils.MoveStackToPoint(gatheredStack, cleanUpDepositPoint.position));
     }
 
     // NextWave increments curWaveNum and starts the next wave. Called from waveTicker end.
@@ -118,6 +110,7 @@ public class WaveManager : MonoBehaviour {
             curWaveNum += 1;
             StartWave(battle.waves[curWaveNum - 1]);
         } else {    // No more waves, last wave timer finished... battle won
+            curWaveNum = 0;
             WonBattle();
         }
     }
@@ -166,18 +159,10 @@ public class WaveManager : MonoBehaviour {
 [Serializable]
 public struct Battle {
     public List<Wave> waves;
-
-    public int TotalValue() {
-        return waves.Sum(wave => wave.TotalValue());
-    }
 }
 
 [Serializable]
 public struct Wave {
     public List<SO_Animal> enemies;
     public int tickDuration;
-
-    public int TotalValue() {
-        return enemies.Sum(aSO => aSO.value);
-    }
 }

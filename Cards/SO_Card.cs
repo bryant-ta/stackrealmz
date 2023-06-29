@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Cards/Card")]
@@ -11,5 +12,6 @@ public class SO_Card : ScriptableObject {
 public enum Rarity {
     Common = 0,
     Rare = 1,
-    Legendary = 2,
+    Epic = 2,
+    Legendary = 3,
 }

@@ -14,7 +14,6 @@ public class CombatTicker {
     EventID tickerEndEvent;
 
     bool autoReset;
-    public bool forceEndTick;   // Keep invoking at end tick, do not reset or pause
 
     public CombatTicker(GameObject ownerObj, EventID tickEvent, EventID tickerEndEvent, int endTick, bool autoReset = true, int startTick = 0) {
         this.ownerObj = ownerObj;
@@ -33,20 +32,24 @@ public class CombatTicker {
     public void Tick(int n = 1) {
         if (curTick >= endTick) {
             curTick = endTick;
-
+            
             if (autoReset) {
                 Reset();
             } else {
                 Pause();    // if no autoreset, wait for manual reset at full timer 
             }
             
-            if (ownerObj == GameObject.Find("PlayerAnimal")) Debug.Log("invoked");
+            // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log("invoked");
             EventManager.Invoke(ownerObj, tickerEndEvent);
             
             return; 
         }
-        
-        SetCurTick(curTick + n);
+        curTick += n;
+        // if (ownerObj == GameObject.Find("CombatManager")) Debug.Log(curTick);
+
+        CombatTickerArgs args = new CombatTickerArgs
+            {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
+        EventManager.Invoke(ownerObj, tickEvent, args);
     }
     public void OneTick() { // Required for adding listener to CombatClock, matching delegate signature
         Tick();
@@ -86,19 +89,6 @@ public class CombatTicker {
         }
         
         startTick = n;
-    }
-    // SetCurTick can be used to bybass extra logic in Tick(), such as invoking tickerEndEvent
-    public void SetCurTick(int n) {
-        if (n < 0) { 
-            Debug.LogError("Cannot set curTick < 0, startTick unchanged");
-            return; 
-        }
-
-        curTick = n;
-        
-        CombatTickerArgs args = new CombatTickerArgs
-            {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
-        EventManager.Invoke(ownerObj, tickEvent, args);
     }
 
     public bool Ready() { return curTick == endTick; }

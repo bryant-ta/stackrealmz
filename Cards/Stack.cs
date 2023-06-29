@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -42,10 +41,9 @@ public class Stack : MonoBehaviour {
         }
     }
 
-    public Transform Extract(Card card) {
+    public Transform ExtractWithoutCraft(Card card) {
         isChanged = true;
         RemoveCard(card);
-        TryCraft();
         return card.transform;
     }
 
@@ -100,16 +98,11 @@ public class Stack : MonoBehaviour {
                     if (cSO == null) {
                         continue;
                     }
-
-                    Stack s = CardFactory.CreateStack(cSO);
-                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.numRandomProducts,
-                        Constants.CardCreationRadius, transform.position);
+                    CreateProduct(cSO, i, validRecipe.numRandomProducts);
                 }
             } else {
                 for (int i = 0; i < validRecipe.products.Count; i++) {
-                    Stack s = CardFactory.CreateStack(validRecipe.products[i]);
-                    s.transform.position = Utils.GenerateCircleVector(i, validRecipe.products.Count,
-                        Constants.CardCreationRadius, transform.position);
+                    CreateProduct(validRecipe.products[i], i, validRecipe.products.Count);
                 }
             }
             
@@ -131,7 +124,23 @@ public class Stack : MonoBehaviour {
         }
     }
 
+    void CreateProduct(SO_Card cSO, int i, int total) {
+        if (cSO is SO_Sheet sSO) {
+            Sheet sheet = CardFactory.CreateSheet(sSO);
+            sheet.transform.position = Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position);
+            return;
+        }
+        
+        Stack s = CardFactory.CreateStack(cSO);
+        s.transform.position = Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position);
+    }
+
     IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
+        if (craftTime == 0) {
+            onCraftFinished(1);
+            yield break;
+        }
+        
         // TODO: If this slow, make this pooled
         GameObject barObj = Instantiate(craftProgressBar, GameManager.Instance.WorldCanvas.gameObject.transform);
         barObj.transform.position =
@@ -225,12 +234,12 @@ public class Stack : MonoBehaviour {
         return new Vector3(0, 0.01f * i, -Constants.StackCardPosOffset * i);
     }
     // RecalculateStackPositions moves stack cards to their correct positions according to stack indexes
-    void RecalculateStackPositions() {
+    public void RecalculateStackPositions() {
         foreach (Card c in stack) {
             c.transform.localPosition = CalculateStackPosition(c);
         }
     }
-
+    
     public int TotalValue() {
         int total = 0;
         foreach (Card card in stack) {

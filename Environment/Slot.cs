@@ -3,6 +3,9 @@ using UnityEngine;
 public class Slot : MonoBehaviour {
     public int x, y;
     public bool isLocked;
+    
+    public Stack Stack { get { return stack; } private set { stack = value; } }
+    [SerializeField] protected Stack stack;
 
     public Card Card { get { return card; } private set { card = value; } }
     [SerializeField] protected Card card;
@@ -15,19 +18,25 @@ public class Slot : MonoBehaviour {
     public virtual bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
         if (!IsEmpty() || (isPlayerCalled && isLocked) || stack.GetStackSize() != 1) { return false; }
 
+        // Set slot fields
+        this.stack = stack;
         card = stack.GetTopCard();
 
+        // Set card fields
         // Reset card's previous slot, if any, such as when moving card directly between slots
         if (card.mSlot && card.mSlot.Card) {
             card.mSlot.Card = null;
         }
         card.mSlot = this;
-        
         if (card.TryGetComponent(out Moveable m)) {
             m.isStackable = false;
         }
 
+        // Move card to slot
         StartCoroutine(Utils.MoveStackToPoint(stack, CalculateCardPosition()));
+        
+        // Send event
+        EventManager.Invoke(gameObject, EventID.SlotPlaced);
 
         return true;
     }
@@ -35,13 +44,19 @@ public class Slot : MonoBehaviour {
     public virtual Transform PickUp(bool isPlayerCalled = false) {
         if (isPlayerCalled && isLocked) return null;
         
-        Card c = card;
+        // Set card fields
         card.mSlot = null;
-        card = null;
-        
-        if (c.TryGetComponent(out Moveable m)) {
+        if (card.TryGetComponent(out Moveable m)) {
             m.isStackable = true;
         }
+        Card c = card;
+        
+        // Set slot fields
+        stack = null;
+        card = null;
+        
+        // Send event
+        EventManager.Invoke(gameObject, EventID.SlotPickedUp);
         
         return c.transform;
     }
@@ -50,7 +65,7 @@ public class Slot : MonoBehaviour {
         return card == null;
     }
 
-    public Vector3 CalculateCardPosition() {
+    protected Vector3 CalculateCardPosition() {
         return new Vector3(transform.position.x, 0.01f, transform.position.z);
     }
 }

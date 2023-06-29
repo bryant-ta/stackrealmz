@@ -6,6 +6,7 @@ using UnityEngine;
 public class CardUI : MonoBehaviour
 {
     public TextMeshProUGUI nameText;
+    public TextMeshProUGUI valueText;
 
     Card mCard;
     
@@ -13,5 +14,11 @@ public class CardUI : MonoBehaviour
         mCard = GetComponent<Card>();
 
         nameText.text = mCard.name;
+
+        if (mCard.value > 0) {
+            valueText.text = mCard.value.ToString();
+        } else {
+            valueText.enabled = false;
+        }
     }
 }

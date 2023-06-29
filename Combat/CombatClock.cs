@@ -20,10 +20,4 @@ public class CombatClock : MonoBehaviour {
 
         timer += GameManager.Instance.TimeScale * Time.deltaTime;
     }
-
-    public void NextTurn() {
-        GameManager.Instance.SetTimeSpeed(0);
-        timer = 0;
-        onTick.Invoke();
-    }
 }

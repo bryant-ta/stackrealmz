@@ -18,6 +18,8 @@ public enum EventID {
     StartBattle = 106,
     WonBattle = 107,
     LostBattle = 108,
+    SlotPlaced = 190,           // Slot
+    SlotPickedUp = 191,
     Heal = 201,               // Health
     Damage = 202,
     SetHp = 203,
