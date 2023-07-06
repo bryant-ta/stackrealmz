@@ -18,9 +18,6 @@ public class FuelSheet : Sheet
     public override void PlaceSecondary() {
         
     }
-    // public void PickedUpSecondary() {
-    //     
-    // }
 
     public override void TryCraft() {
         if (fuelSlot.IsEmpty()) return;

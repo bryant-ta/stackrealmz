@@ -33,7 +33,7 @@ public class CardFactory : MonoBehaviour {
     public static GameObject _stackBase;
 
     public List<Recipe> recipes;
-    public static List<Recipe> _recipes;
+    public static List<Recipe> _recipes = new List<Recipe>();
 
     void Awake() {
         _cardBase = cardBase;
@@ -45,7 +45,10 @@ public class CardFactory : MonoBehaviour {
         
         _stackBase = stackBase;
         
-        _recipes = recipes;
+        foreach (Recipe recipe in recipes) {
+            _recipes.Add(recipe);
+        }
+        recipes = _recipes;
     }
 
     /*
@@ -54,27 +57,30 @@ public class CardFactory : MonoBehaviour {
             Stack s = CardFactory.CreateStack(stockCardData);
             s.transform.position = CalculateCardPosition();
      */
-    public static Stack CreateStack(SO_Card cSO = null) {
-        Stack s = Instantiate(_stackBase).GetComponent<Stack>();
+    public static Stack CreateStack(Vector3 pos, SO_Card cSO = null) {
+        // TODO: remove this and convert all to regular 2D (no rotation) when change is FOR SURE
+        Quaternion alwaysRotate = Quaternion.Euler(90, 0, 0);
+        
+        Stack s = Instantiate(_stackBase, pos, Quaternion.identity).GetComponent<Stack>();
         if (cSO == null) {
             return s;
         }
         
         // possibly use interface to fix this strangeness
         if (cSO is SO_Food fSO) {
-            Food f = Instantiate(_foodBase).GetComponent<Food>();
+            Food f = Instantiate(_foodBase, pos, alwaysRotate).GetComponent<Food>();
             f.foodData = fSO;
             s.Place(f);
         } else if (cSO is SO_Animal aSO) {
-            Animal a = Instantiate(_animalBase).GetComponent<Animal>();
+            Animal a = Instantiate(_animalBase, pos, alwaysRotate).GetComponent<Animal>();
             a.animalData = aSO;
             s.Place(a);
         } else if (cSO is SO_CardPack cpSO) {
-            CardPack cp = Instantiate(_cardPackBase).GetComponent<CardPack>();
+            CardPack cp = Instantiate(_cardPackBase, pos, alwaysRotate).GetComponent<CardPack>();
             cp.cardPackData = cpSO;
             s.Place(cp);
         } else {    // is just SO_Card
-            Card c = Instantiate(_cardBase).GetComponent<Card>();
+            Card c = Instantiate(_cardBase, pos, alwaysRotate).GetComponent<Card>();
             c.cardData = cSO;
             s.Place(c);
         }

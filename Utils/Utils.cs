@@ -11,13 +11,12 @@ public static class Utils
     }
     
     // Actually have a lot of trouble combining with MoveCardToPoint nicely... leaving separate for now for ease of use
-    // prob need to move this out of moveable???
     public static IEnumerator MoveStackToPoint(Stack stack, Vector3 endPoint) {
         Vector3 startPos = stack.transform.localPosition;
-        float t = 0f;
 
         stack.isLocked = true;
         
+        float t = 0f;
         while (t < 1) {
             t += Constants.CardMoveSpeed * Time.deltaTime;
             stack.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
@@ -29,10 +28,10 @@ public static class Utils
     
     public static IEnumerator MoveCardToPoint(Card card, Vector3 endPoint) {
         Vector3 startPos = card.transform.localPosition;
-        float t = 0f;
 
         card.mStack.isLocked = true;
         
+        float t = 0f;
         while (t < 1) {
             t += Constants.CardMoveSpeed * Time.deltaTime;
             card.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
@@ -40,5 +39,16 @@ public static class Utils
         }
         
         card.mStack.isLocked = false;
+    }
+    
+    public static IEnumerator MoveObjToPoint(Transform obj, Vector3 endPoint) {
+        Vector3 startPos = obj.transform.localPosition;
+        
+        float t = 0f;
+        while (t < 1) {
+            t += Constants.CardMoveSpeed * Time.deltaTime;
+            obj.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
+            yield return null;
+        }
     }
 }

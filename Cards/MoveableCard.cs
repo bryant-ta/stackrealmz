@@ -1,11 +1,10 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(Card))]
-public class Moveable : MonoBehaviour {
-    public bool isStackable = true;
+public class MoveableCard : MonoBehaviour, IMoveable {
+    public bool IsStackable { get => isStackable; set => isStackable = value; }
+    [SerializeField] bool isStackable = true;
     public List<Transform> nearestSnappableObjs = new List<Transform>();
 
     bool isPickedUp;
@@ -38,7 +37,7 @@ public class Moveable : MonoBehaviour {
             float minDistance = int.MaxValue;
             Card snapCard = null;
             Slot snapSlot = null;
-            foreach (Transform near in nearestSnappableObjs.ToList()) {
+            foreach (Transform near in nearestSnappableObjs) {
                 // For keepCard recipes, a nearest card could be destroyed, but ref to it remains in nearestSnappableObjs.
                 // This cleans up those refs... Other solution could be moving object to be destroyed far away to trigger OnTriggerExit?
                 if (near == null) {
@@ -50,7 +49,7 @@ public class Moveable : MonoBehaviour {
                 if (near.TryGetComponent(out Card card)) {
                     // Card is not part of my stack and is top card of a stack
                     if (card.mStack != mCard.mStack && card.mStack.GetTopCard() == card &&
-                        card.GetComponent<Moveable>().isStackable && d < minDistance) {
+                        card.GetComponent<MoveableCard>().isStackable && d < minDistance) {
                         snapSlot = null;
                         minDistance = d;
                         snapCard = card.transform.GetComponent<Card>();
@@ -66,8 +65,7 @@ public class Moveable : MonoBehaviour {
 
             // Snap to stack
             if (snapCard) {
-                List<Card>
-                    movedCards = mCard.mStack.GetStack(); // Save copy since PlaceAll will delete parent stack object
+                List<Card> movedCards = mCard.mStack.GetStack(); // Save copy since PlaceAll will delete parent stack object
                 mCard.mStack.PlaceAll(snapCard.mStack);
 
                 foreach (Card c in movedCards) { // Then move each card individually
@@ -101,7 +99,7 @@ public class Moveable : MonoBehaviour {
 
     void SetStackIsPickedUp(bool status) {
         if (mCard.mStack != null) {
-            foreach (var moveable in mCard.mStack.GetComponentsInStack<Moveable>()) {
+            foreach (var moveable in mCard.mStack.GetComponentsInStack<MoveableCard>()) {
                 moveable.isPickedUp = status;
             }
         } else {

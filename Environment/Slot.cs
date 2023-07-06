@@ -9,9 +9,11 @@ public class Slot : MonoBehaviour {
 
     public Card Card { get { return card; } private set { card = value; } }
     [SerializeField] protected Card card;
+    bool cardWasStackable;
     
     public SlotGrid SlotGrid { get { return mSlotGrid; } private set { mSlotGrid = value; } }
     [SerializeField] protected SlotGrid mSlotGrid;
+
 
     // PlaceAndMove handles registering a stack with the slot and physically moving stack's location to this Slot
     // Slots only allow stacks of one card (for now?)
@@ -28,12 +30,14 @@ public class Slot : MonoBehaviour {
             card.mSlot.Card = null;
         }
         card.mSlot = this;
-        if (card.TryGetComponent(out Moveable m)) {
-            m.isStackable = false;
+        stack.transform.SetParent(transform);
+        if (card.TryGetComponent(out MoveableCard m)) {
+            cardWasStackable = m.IsStackable;
+            m.IsStackable = false;
         }
 
-        // Move card to slot
-        StartCoroutine(Utils.MoveStackToPoint(stack, CalculateCardPosition()));
+        // Move card to slot (negative StackDepthOffset in Z bc child of slot when placed, slot is rotated)
+        StartCoroutine(Utils.MoveStackToPoint(stack, new Vector3(0,0,-Constants.StackDepthOffset)));
         
         // Send event
         EventManager.Invoke(gameObject, EventID.SlotPlaced);
@@ -46,15 +50,17 @@ public class Slot : MonoBehaviour {
         
         // Set card fields
         card.mSlot = null;
-        if (card.TryGetComponent(out Moveable m)) {
-            m.isStackable = true;
+        card.mStack.transform.SetParent(null);
+        if (card.TryGetComponent(out MoveableCard m)) {
+            m.IsStackable = cardWasStackable;
+            cardWasStackable = false;
         }
         Card c = card;
         
         // Set slot fields
         stack = null;
         card = null;
-        
+
         // Send event
         EventManager.Invoke(gameObject, EventID.SlotPickedUp);
         
@@ -63,9 +69,5 @@ public class Slot : MonoBehaviour {
 
     public bool IsEmpty() {
         return card == null;
-    }
-
-    protected Vector3 CalculateCardPosition() {
-        return new Vector3(transform.position.x, 0.01f, transform.position.z);
     }
 }

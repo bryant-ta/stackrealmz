@@ -25,8 +25,7 @@ public class ShopSlot : Slot
 
     void Restock() {
         if (infiniteQuantity || remainingQuantity > 0) {
-            Stack s = CardFactory.CreateStack(stockCardData);
-            s.transform.position = CalculateCardPosition();
+            Stack s = CardFactory.CreateStack(transform.position, stockCardData);
             base.PlaceAndMove(s);
 
             if (remainingQuantity > 0) remainingQuantity--;

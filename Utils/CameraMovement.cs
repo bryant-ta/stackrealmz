@@ -1,3 +1,4 @@
+    using System;
     using UnityEngine;
     using UnityEngine.InputSystem;
 
@@ -43,8 +44,8 @@
         [Header("Vertical Translation")]
         [SerializeField] float stepSize = 2f;
         [SerializeField] float zoomDampening = 7.5f;
-        [SerializeField] float minHeight = 5f;
-        [SerializeField] float maxHeight = 50f;
+        [SerializeField] float minZoom = 5f;
+        [SerializeField] float maxZoom = 50f;
 
         [Header("Edge Movement")]
         [SerializeField] [Range(0f,0.1f)] float edgeTolerance = 0.05f;
@@ -53,7 +54,7 @@
         //used to update the position of the camera base object.
         Vector3 targetPosition;
 
-        float zoomHeight;
+        float zoomSize;
 
         //used to track and maintain velocity w/o a rigidbody
         Vector3 horizontalVelocity;
@@ -71,7 +72,7 @@
 
         void OnEnable()
         {
-            zoomHeight = mainCameraTransform.localPosition.y;
+            zoomSize = mainCamera.orthographicSize;
             mainCameraTransform.LookAt(transform);
 
             lastPosition = transform.position;
@@ -97,7 +98,7 @@
             //move base and camera objects
             UpdateVelocity();
             UpdateBasePosition();
-            UpdateCameraPosition();
+            UpdateZoom();
         }
 
         void UpdateVelocity()
@@ -183,22 +184,21 @@
 
             if (Mathf.Abs(inputValue) > 0.1f)
             {
-                zoomHeight = mainCameraTransform.localPosition.y + inputValue * stepSize;
+                zoomSize = mainCamera.orthographicSize + inputValue * stepSize;
 
-                if (zoomHeight < minHeight)
-                    zoomHeight = minHeight;
-                else if (zoomHeight > maxHeight)
-                    zoomHeight = maxHeight;
+                if (zoomSize < minZoom)
+                    zoomSize = minZoom;
+                else if (zoomSize > maxZoom)
+                    zoomSize = maxZoom;
             }
         }
 
-        void UpdateCameraPosition()
+        void UpdateZoom()
         {
             //set zoom target
-            Vector3 zoomTarget = new Vector3(mainCameraTransform.localPosition.x, zoomHeight, mainCameraTransform.localPosition.z);
+            mainCamera.orthographicSize = Mathf.Lerp(mainCamera.orthographicSize, zoomSize, Time.deltaTime * zoomDampening);
             
-            mainCameraTransform.localPosition = Vector3.Lerp(mainCameraTransform.localPosition, zoomTarget, Time.deltaTime * zoomDampening);
-            mainCameraTransform.LookAt(this.transform);
+            // mainCameraTransform.LookAt(transform);
         }
 
         //gets the horizontal forward vector of the camera

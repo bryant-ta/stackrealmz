@@ -50,9 +50,8 @@ public class Stack : MonoBehaviour {
     // SplitStack returns a new stack (+object) containing all cards from input card to end of current stack
     // - Sets each cards mStack reference
     Transform SplitStack(Card card) {
-        Stack newStack = CardFactory.CreateStack();
         int splitIndex = stack.IndexOf(card);
-        newStack.transform.position = stack[splitIndex].transform.position;
+        Stack newStack = CardFactory.CreateStack(stack[splitIndex].transform.position);
 
         MoveCardRangeTo(newStack, splitIndex, stack.Count - splitIndex);
 
@@ -131,8 +130,7 @@ public class Stack : MonoBehaviour {
             return;
         }
         
-        Stack s = CardFactory.CreateStack(cSO);
-        s.transform.position = Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position);
+        Stack s = CardFactory.CreateStack(Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position), cSO);
     }
 
     IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
@@ -231,7 +229,8 @@ public class Stack : MonoBehaviour {
     // CalculateStackPosition returns correct card position according to its stack index
     public Vector3 CalculateStackPosition(Card card) {
         int i = stack.IndexOf(card);
-        return new Vector3(0, 0.01f * i, -Constants.StackCardPosOffset * i);
+        Vector3 test = new Vector3(0, Constants.StackDepthOffset * i, -Constants.StackHeightOffset * i);
+        return test;
     }
     // RecalculateStackPositions moves stack cards to their correct positions according to stack indexes
     public void RecalculateStackPositions() {

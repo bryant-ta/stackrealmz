@@ -3,23 +3,17 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour {
-    [SerializeField] Moveable heldMoveable;
-
     [SerializeField] LayerMask dragLayer;
     [SerializeField] LayerMask cardLayer;
 
-    CameraController mainCameraCtrl;
-    
-    void Start() {
-        mainCameraCtrl = Camera.main.GetComponent<CameraController>();
-    }
+    IMoveable heldMoveable;
 
     public void OnPrimaryDown() {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
             if (hit.collider != null) {
-                if (hit.collider.gameObject.TryGetComponent(out Moveable moveable)) {
+                if (hit.collider.gameObject.TryGetComponent(out IMoveable moveable)) {
                     HoldMoveable(moveable);
                 }
                 
@@ -48,13 +42,13 @@ public class Player : MonoBehaviour {
     // }
 
     public void OnCameraZoom() {
-        mainCameraCtrl.ZoomToggle();
+        
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    void HoldMoveable(Moveable c) {
+    void HoldMoveable(IMoveable c) {
         Transform stackTrans = c.PickUp();
         if (stackTrans) {
             heldMoveable = c;
@@ -75,7 +69,7 @@ public class Player : MonoBehaviour {
         }
     }
 
-    void DropMoveable(Moveable c) {
+    void DropMoveable(IMoveable c) {
         if (heldMoveable != null) {
             heldMoveable.Drop();
         }
