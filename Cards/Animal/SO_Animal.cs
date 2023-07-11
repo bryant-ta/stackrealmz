@@ -10,6 +10,17 @@ public class SO_Animal : SO_Card {
 
     public AttackType atkType;
     public AbilityType abilityType;
-    
-    public Terrain terrainPref;
+
+    public string text;
+    public Group group;
+
+    // public Terrain terrainPref;
+}
+
+public enum Group {
+    None,
+    Forge,
+    Artillery,
+    Plant,
+    Evergreen,
 }

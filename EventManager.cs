@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public enum EventID {
     PrimaryDown = 0,    // Input
     SecondaryDown = 1,
+    TertiaryDown = 2,
     ModifyMoney = 10,   // General
     ModifyLife = 11,
     ModifyMaxLife = 12,

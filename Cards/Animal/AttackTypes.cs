@@ -12,13 +12,15 @@ using UnityEngine;
 // 5. (done once) In SO_Animal, add AttackType enum
 public enum AttackType {
     Standard,
-    Sweep
+    Sweep,
+    Mighty,
 }
 
 public static class AttackTypeLookUp {
     public static Dictionary<AttackType, IAttack> LookUp = new Dictionary<AttackType, IAttack>() {
         {AttackType.Standard, new StandardAttack()},
-        {AttackType.Sweep, new SweepAttack()}
+        {AttackType.Sweep, new SweepAttack()},
+        {AttackType.Mighty, new MightyAttack()},
     };
 }
 
@@ -26,22 +28,25 @@ public static class AttackTypeLookUp {
 
 public interface IAttack {
     // Attack returns true if Attack found valid targets (false if hit no targets, such as at field boundaries)
-    public bool Attack(Slot originSlot, int dmg, bool flip = false);
+    public bool Attack(Slot originSlot, int dmg, bool enemyCalled = false);
 }
 
 public class StandardAttack : IAttack
 {
-    public bool Attack(Slot originSlot, int dmg, bool flip) {
-        Slot targetSlot = originSlot.SlotGrid.Forward(originSlot, flip);
-        
-        if (targetSlot) {
-            if (targetSlot.Card) {
+    public bool Attack(Slot originSlot, int dmg, bool enemyCalled) {
+        for (int x = 2; x <= 3; x++) {
+            Slot targetSlot = originSlot.SlotGrid.SelectSlot(new Vector2Int(x, originSlot.y), enemyCalled);
+
+            if (targetSlot && targetSlot.Card) {
                 targetSlot.Card.GetComponent<Health>().Damage(dmg);
                 return true;
-            } else if (targetSlot.x == 0) {
-                GameManager.Instance.playerLife.Damage(dmg);
-                return true;
             }
+        }
+
+        // nothing in row to hit, enemy can hit player
+        if (enemyCalled) {
+            GameManager.Instance.playerLife.Damage(dmg);
+            return true;
         }
 
         return false;
@@ -50,10 +55,10 @@ public class StandardAttack : IAttack
 
 public class SweepAttack : IAttack
 {
-    public bool Attack(Slot originSlot, int dmg, bool flip) {
+    public bool Attack(Slot originSlot, int dmg, bool enemyCalled) {
         List<Slot> targetSlots = new List<Slot>();
         for (int y = -1; y <= 1; y++) {
-            Slot targetSlot = originSlot.SlotGrid.SelectSlot(originSlot, flip, new Vector2Int(1, y));
+            Slot targetSlot = originSlot.SlotGrid.SelectSlotRelative(originSlot, enemyCalled, new Vector2Int(1, y));
             if (targetSlot) { targetSlots.Add(targetSlot); }
         }
 
@@ -69,5 +74,14 @@ public class SweepAttack : IAttack
         }
 
         return didHit;
+    }
+}
+
+public class MightyAttack : IAttack
+{
+    // TODO: implement Mighty attack (hit all in row)
+    public bool Attack(Slot originSlot, int dmg, bool enemyCalled) {
+
+        return false;
     }
 }

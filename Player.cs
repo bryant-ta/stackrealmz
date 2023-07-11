@@ -31,6 +31,16 @@ public class Player : MonoBehaviour {
             }
         }
     }
+
+    public void OnTertiaryDown() {
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100.0f)) {
+            if (hit.collider != null) {
+                EventManager.Invoke(hit.collider.gameObject, EventID.TertiaryDown);
+            }
+        }
+    }
     
     public void OnPrimaryUp() {
         DropMoveable(heldMoveable);

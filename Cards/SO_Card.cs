@@ -7,6 +7,7 @@ public class SO_Card : ScriptableObject {
     public int value;
     public Sprite image;
     public Rarity rarity;
+    public Realm realm;
 }
 
 public enum Rarity {
@@ -14,4 +15,12 @@ public enum Rarity {
     Rare = 1,
     Epic = 2,
     Legendary = 3,
+}
+
+public enum Realm {
+    Neutral = 0,
+    Fire = 1,
+    Earth = 2,
+    Water = 3,
+    Air = 4,
 }

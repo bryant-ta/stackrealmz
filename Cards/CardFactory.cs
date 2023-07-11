@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -45,9 +46,7 @@ public class CardFactory : MonoBehaviour {
         
         _stackBase = stackBase;
         
-        foreach (Recipe recipe in recipes) {
-            _recipes.Add(recipe);
-        }
+        LoadRecipes();
         recipes = _recipes;
     }
 
@@ -114,6 +113,53 @@ public class CardFactory : MonoBehaviour {
         }
 
         return null;
+    }
+    public static List<Recipe> LookupRecipesWithProduct(SO_Card cSO) {
+        List<Recipe> matchingRecipes = new List<Recipe>();
+        foreach (Recipe r in _recipes) {
+            if (r.ContainsProduct(cSO)) {
+                matchingRecipes.Add(r);
+            }
+        }
+        return matchingRecipes;
+    }
+    public static List<Recipe> LookupRecipesWithMaterial(SO_Card cSO) {
+        List<Recipe> matchingRecipes = new List<Recipe>();
+        foreach (Recipe r in _recipes) {
+            if (r.ContainsMaterial(cSO)) {
+                matchingRecipes.Add(r);
+            }
+        }
+        return matchingRecipes;
+    }
+
+    void LoadRecipes() {
+        string[] assetPaths = AssetDatabase.FindAssets("t:SO_Recipe", new string[] { Constants.RecipeDataPath });
+
+        _recipes.Clear();
+        
+        // Load recipes created in inspector
+        foreach (Recipe recipe in recipes) {
+            _recipes.Add(recipe);
+        }
+        
+        // Load recipes from Assets
+        for (int i = 0; i < assetPaths.Length; i++)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(assetPaths[i]);
+            SO_Recipe recipeData = AssetDatabase.LoadAssetAtPath<SO_Recipe>(assetPath);
+
+            Recipe recipe = new Recipe {
+                id = recipeData.id,
+                products = recipeData.products,
+                materials = recipeData.materials,
+                reusableMaterials = recipeData.reusableMaterials,
+                craftTime = recipeData.craftTime,
+                randomProducts = recipeData.randomProducts,
+                numRandomProducts = recipeData.numRandomProducts,
+            };
+            _recipes.Add(recipe);
+        }
     }
     
     /*

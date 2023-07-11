@@ -101,7 +101,10 @@ public class WaveManager : MonoBehaviour {
                 }
             }
         }
-        StartCoroutine(Utils.MoveStackToPoint(gatheredStack, cleanUpDepositPoint.position));
+
+        if (gatheredStack) {
+            StartCoroutine(Utils.MoveStackToPoint(gatheredStack, cleanUpDepositPoint.position));
+        }
     }
 
     // NextWave increments curWaveNum and starts the next wave. Called from waveTicker end.

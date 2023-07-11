@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Cards/Recipe")]
@@ -24,6 +25,14 @@ public class Recipe {
         
     public List<Drop> randomProducts;
     public int numRandomProducts;
+
+    public bool ContainsProduct(SO_Card cSO) {
+        return products.Contains(cSO) || randomProducts.Exists(drop => drop.cardDropsPool.Contains(cSO));
+    }
+
+    public bool ContainsMaterial(SO_Card cSO) {
+        return materials.Contains(cSO.name);
+    }
 }
 
 [Serializable]

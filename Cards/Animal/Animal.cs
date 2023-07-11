@@ -7,8 +7,8 @@ public class Animal : Card {
 
     [SerializeField] public Stat atkDmg;
     [SerializeField] public Stat atkSpd;
-    [SerializeField] public Stat ablPwr;
-    [SerializeField] public Stat ablCd;
+    // [SerializeField] public Stat ablPwr;
+    // [SerializeField] public Stat ablCd;
 
     IAttack attack;
     CombatTicker attackTicker;
@@ -18,12 +18,12 @@ public class Animal : Card {
     public bool isEnemy;
     public bool isInCombat;
 
-    void Start() {
-        Setup(animalData.name, animalData.value, animalData.image);
+    new void Start() {
+        Setup(animalData);
         atkDmg = new Stat(animalData.atkDmg);
         atkSpd = new Stat(animalData.atkSpd);
-        ablCd = new Stat(animalData.ablCd);
-        ablPwr = new Stat(animalData.ablPwr);
+        // ablCd = new Stat(animalData.ablCd);
+        // ablPwr = new Stat(animalData.ablPwr);
 
         attack = AttackTypeLookUp.LookUp[animalData.atkType];
         ability = AbilityTypeLookUp.LookUp[animalData.abilityType];
@@ -41,13 +41,14 @@ public class Animal : Card {
             return;
         }
 
-        if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
+        // if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
         int dmg = atkDmg.Value * terrainModifier;
 
         if (!attack.Attack(mSlot, dmg, isEnemy)) {
-            // If did not attack anything, move forward one space
-            Step();
-            attack.Attack(mSlot, dmg, isEnemy);
+            attackTicker.Start();   // hit nothing
+        } else {
+            attackTicker.Reset();   // hit something, reset timer
+            attackTicker.Start();
         }
     }
 
@@ -59,32 +60,38 @@ public class Animal : Card {
         }
     }
 
-    public void Ability() {
-        if (mSlot && abilityTicker.Ready()) {
-            abilityTicker.Reset();
-            abilityTicker.Start();
-            ability.Use(mSlot, ablPwr.Value);
-        }
+    void Ability() {
+        // if (isInCombat && mSlot && abilityTicker.Ready()) {
+        //     abilityTicker.Reset();
+        //     abilityTicker.Start();
+        //     ability.Use(mSlot, ablPwr.Value);
+        // }
     }
 
     void Death() {
         print("Ahhh I ded");
+
+        StartCoroutine(DestroyNextFrame());
+    }
+
+    IEnumerator DestroyNextFrame() {
+        yield return null;
         
-        // mStack.Extract(this);
         mSlot.PickUp();
         if (isEnemy) {
             EventManager.Invoke(WaveManager.Instance.gameObject, EventID.EnemyDied);
         }
-
+        
         Destroy(gameObject);
+        mStack.ExtractWithoutCraft(this);
     }
     
     public void StartCombatState() {
         // TODO: ensure atkSpd/ablCd correctly updates tickers
         isInCombat = true;
         
-        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, atkSpd.Value);
-        abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
+        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, atkSpd.Value, false);
+        // abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
 
         EventManager.Invoke(gameObject, EventID.EnterCombat);
     }

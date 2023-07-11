@@ -1,5 +1,6 @@
     using System;
     using UnityEngine;
+    using UnityEngine.EventSystems;
     using UnityEngine.InputSystem;
 
 /* Adapted from OneWheelStudio - Adventures-in-C-Sharp (https://github.com/onewheelstudio/Adventures-in-C-Sharp/blob/main/License)
@@ -180,16 +181,16 @@
 
         void ZoomCamera(InputAction.CallbackContext obj)
         {
-            float inputValue = -obj.ReadValue<Vector2>().y / 100f;
+            if (!EventSystem.current.IsPointerOverGameObject()) {
+                float inputValue = -obj.ReadValue<Vector2>().y / 100f;
 
-            if (Mathf.Abs(inputValue) > 0.1f)
-            {
-                zoomSize = mainCamera.orthographicSize + inputValue * stepSize;
+                if (Mathf.Abs(inputValue) > 0.1f) {
+                    zoomSize = mainCamera.orthographicSize + inputValue * stepSize;
 
-                if (zoomSize < minZoom)
-                    zoomSize = minZoom;
-                else if (zoomSize > maxZoom)
-                    zoomSize = maxZoom;
+                    if (zoomSize < minZoom)
+                        zoomSize = minZoom;
+                    else if (zoomSize > maxZoom) zoomSize = maxZoom;
+                }
             }
         }
 

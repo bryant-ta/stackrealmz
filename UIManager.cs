@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,14 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI lifeText;
     public TextMeshProUGUI moneyText;
     public Image waveProgressFill;
+
+    // Recipe Viewer
+    public GameObject recipeViewer;
+    public TextMeshProUGUI recipeProductText;
+    public TextMeshProUGUI recipeMaterialsText;
+    public GameObject worldBackground;  // for hiding recipe viewer
+    public GameObject craftsRecipePanel;
+    public Transform craftsGrid;
     
     public GameManager gameMngr;
     public WaveManager waveMngr;
@@ -33,6 +42,10 @@ public class UIManager : MonoBehaviour
         EventManager.Subscribe<int>(gameMngr.gameObject, EventID.ModifyMoney, UpdateMoneyText);
         
         EventManager.Subscribe<CombatTickerArgs>(waveMngr.gameObject, EventID.WaveTick, UpdateWaveProgressBar);
+        
+        // Recipe Viewer
+        EventManager.Subscribe<SO_Card>(gameObject, EventID.TertiaryDown, UpdateRecipeViewer);
+        EventManager.Subscribe(worldBackground, EventID.TertiaryDown, HideRecipeViewer);
     }
 
     // TODO: Consider separating into 2 objects when learning more about UI
@@ -49,5 +62,43 @@ public class UIManager : MonoBehaviour
 
     void UpdateWaveProgressBar(CombatTickerArgs args) {
         waveProgressFill.fillAmount = (float) args.curTick / args.endTick;
+    }
+
+    void UpdateRecipeViewer(SO_Card targetCard) {
+        recipeViewer.SetActive(true);
+        
+        // Target recipe
+        string materialsText = "";
+        List<Recipe> targetRecipes = CardFactory.LookupRecipesWithProduct(targetCard);
+        foreach (Recipe r in targetRecipes) {
+            materialsText += "> ";
+            foreach (string s in r.materials) {
+                materialsText += s + ", ";
+            }
+
+            materialsText = materialsText.Remove(materialsText.Length - 2);
+            materialsText += "\n";
+        }
+
+        recipeProductText.text = targetCard.name;
+        recipeMaterialsText.text = materialsText;
+        
+        // // TODO: determine if this is even needed, currently broken
+        // // Crafts recipe
+        // List<Recipe> craftsRecipes = CardFactory.LookupRecipesWithMaterial(targetCard);
+        // foreach (Recipe r in craftsRecipes) {
+        //     string craftsText = "> ";
+        //     foreach (SO_Card s in r.products) {
+        //         craftsText += s.name + ", ";
+        //     }
+        //
+        //     craftsText = craftsText.Remove(craftsText.Length - 2);
+        //     
+        //     TextMeshProUGUI craftsPanelText = Instantiate(craftsRecipePanel, craftsGrid).GetComponent<TextMeshProUGUI>();
+        //     craftsPanelText.text = craftsText;
+        // }
+    }
+    void HideRecipeViewer() {
+        recipeViewer.SetActive(false);
     }
 }

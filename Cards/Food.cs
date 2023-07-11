@@ -4,7 +4,7 @@ public class Food : Card {
     public Effect foodEffect;
 
     new void Start() {
-        Setup(foodData.name, foodData.value, foodData.image);
+        Setup(foodData);
         foodEffect = foodData.effect;
         foodEffect.effect = EffectTypeLookUp.LookUp[foodEffect.effectType];
     }

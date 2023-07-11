@@ -51,9 +51,10 @@ public class CombatTicker {
             {endTick = this.endTick, startTick = this.startTick, curTick = this.curTick};
         EventManager.Invoke(ownerObj, tickEvent, args);
     }
-    public void OneTick() { // Required for adding listener to CombatClock, matching delegate signature
+    void OneTick() { // Required for adding listener to CombatClock, matching delegate signature
         Tick();
     }
+    
     public void UnTick(int n = 1) {
         curTick -= n;
         if (curTick <= 0) {     // minimum for all ticker = 0
