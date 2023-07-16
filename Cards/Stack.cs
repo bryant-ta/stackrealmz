@@ -12,6 +12,10 @@ public class Stack : MonoBehaviour {
     [SerializeField] bool isChanged;
     public bool isLocked;
 
+    void Start() {
+        EventManager.Subscribe(gameObject, EventID.CraftDone, TryCraft);
+    }
+
     public void Place(Card card) {
         AddCard(card);
         isChanged = true;
@@ -115,7 +119,9 @@ public class Stack : MonoBehaviour {
                     Destroy(c.gameObject);
                 }
                 RecalculateStackPositions();
-            } else {                                        // Used up all cards, destroy whole stack
+                
+                EventManager.Invoke(gameObject, EventID.CraftDone);
+            } else {                                            // Used up all cards, just destroy whole stack
                 // TODO: convert to event
                 // Destroys all children too
                 Destroy(gameObject);

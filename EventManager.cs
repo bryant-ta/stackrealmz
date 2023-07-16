@@ -9,8 +9,11 @@ public enum EventID {
     ModifyMoney = 10,   // General
     ModifyLife = 11,
     ModifyMaxLife = 12,
+    ModifyMana = 13,
+    ModifyMaxMana = 14,
     WonGame = 30,
     LostGame = 31,
+    CraftDone = 50,
     EnterCombat = 101,
     ExitCombat = 102,
     StartWave = 103,

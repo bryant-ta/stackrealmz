@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class Slot : MonoBehaviour {
     public int x, y;
-    public bool isLocked;
+    public bool canPlace;
+    public bool canPickUp;
     
     public Stack Stack { get { return stack; } private set { stack = value; } }
     [SerializeField] protected Stack stack;
@@ -18,7 +19,7 @@ public class Slot : MonoBehaviour {
     // PlaceAndMove handles registering a stack with the slot and physically moving stack's location to this Slot
     // Slots only allow stacks of one card (for now?)
     public virtual bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
-        if (!IsEmpty() || (isPlayerCalled && isLocked) || stack.GetStackSize() != 1) { return false; }
+        if (!IsEmpty() || (isPlayerCalled && !canPlace) || stack.GetStackSize() != 1) { return false; }
 
         // Set slot fields
         this.stack = stack;
@@ -45,8 +46,8 @@ public class Slot : MonoBehaviour {
         return true;
     }
 
-    public virtual Transform PickUp(bool isPlayerCalled = false) {
-        if (isPlayerCalled && isLocked) return null;
+    public virtual Transform PickUp(bool isPlayerCalled = false, bool doEventInvoke = true) {
+        if (IsEmpty() || (isPlayerCalled && !canPickUp)) return null;
         
         // Set card fields
         card.mSlot = null;
@@ -62,7 +63,7 @@ public class Slot : MonoBehaviour {
         card = null;
 
         // Send event
-        EventManager.Invoke(gameObject, EventID.SlotPickedUp);
+        if (doEventInvoke) EventManager.Invoke(gameObject, EventID.SlotPickedUp);
         
         return c.transform;
     }

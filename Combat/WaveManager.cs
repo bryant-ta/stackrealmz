@@ -39,20 +39,19 @@ public class WaveManager : MonoBehaviour {
         waveTicker.Pause();
         EventManager.Subscribe(gameObject, EventID.EndWave, NextWave);
         
+        EventManager.Subscribe(gameObject, EventID.EnemyDied, DoCheckAllEnemiesDead);
         EventManager.Subscribe(GameManager.Instance.gameObject, EventID.Death, LostBattle);
     }
 
     public void StartBattle() {
         inBattle = true;
         foreach (CombatSlot slot in playSlots) {
-            slot.isLocked = false;
+            slot.canPlace = true;
         }
         
-        EventManager.Subscribe(gameObject, EventID.EnemyDied, DoCheckAllEnemiesDead);
         EventManager.Invoke(gameObject, EventID.StartBattle);
         
         NextWave();
-
         StartCoroutine(SpawnLoop());
     }
 
@@ -69,7 +68,7 @@ public class WaveManager : MonoBehaviour {
     void CleanUp() {
         inBattle = false;
         foreach (CombatSlot slot in playSlots) {
-            slot.isLocked = true;
+            slot.canPlace = false;
         }
         
         if (spawnSlots.Count == 0) {

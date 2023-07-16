@@ -2,6 +2,7 @@ using UnityEngine;
 
 [CreateAssetMenu(menuName = "Cards/Animal")]
 public class SO_Animal : SO_Card {
+    public int manaCost;
     public int hp;
     public int atkDmg;
     public int atkSpd;

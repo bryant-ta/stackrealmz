@@ -5,6 +5,7 @@ using UnityEngine;
 public class Animal : Card {
     public SO_Animal animalData;
 
+    [SerializeField] public Stat manaCost;
     [SerializeField] public Stat atkDmg;
     [SerializeField] public Stat atkSpd;
     // [SerializeField] public Stat ablPwr;
@@ -20,6 +21,7 @@ public class Animal : Card {
 
     new void Start() {
         Setup(animalData);
+        manaCost = new Stat(animalData.manaCost);
         atkDmg = new Stat(animalData.atkDmg);
         atkSpd = new Stat(animalData.atkSpd);
         // ablCd = new Stat(animalData.ablCd);
@@ -76,8 +78,11 @@ public class Animal : Card {
 
     IEnumerator DestroyNextFrame() {
         yield return null;
-        
-        mSlot.PickUp();
+
+        if (mSlot) {
+            mSlot.PickUp();
+        }
+
         if (isEnemy) {
             EventManager.Invoke(WaveManager.Instance.gameObject, EventID.EnemyDied);
         }
@@ -99,7 +104,7 @@ public class Animal : Card {
         isInCombat = false;
         
         attackTicker.Stop();
-        abilityTicker.Stop();
+        // abilityTicker.Stop();
         
         EventManager.Invoke(gameObject, EventID.ExitCombat);
     }

@@ -170,28 +170,17 @@ public class CardFactory : MonoBehaviour {
      */
     public static SO_Card RollDrop(List<Drop> dropTable) {
         // Roll eligible drops
-        int roll = Random.Range(1, 101);
+        int roll = Random.Range(0, 101);
         List<Drop> possibleDrops = new List<Drop>();
+
+        Drop retDrop = new Drop() { percentage = 100 };
         foreach (Drop drop in dropTable) {
-            if (roll <= drop.percentage) {
-                possibleDrops.Add(drop);
+            if (roll <= drop.percentage && roll <= retDrop.percentage) {
+                retDrop = drop;
             }
         }
-
-        // Choose most rare drop
-        if (possibleDrops.Count > 0) {
-            Drop retDrop = possibleDrops[0];
-            for (int i = 1; i < possibleDrops.Count; i++) {
-                if (possibleDrops[i].percentage < retDrop.percentage) {
-                    retDrop = possibleDrops[i];
-                }
-            }
-
-            // Randomly choose drop from Drop card pool
-            return retDrop.cardDropsPool[Random.Range(0, retDrop.cardDropsPool.Count)];
-        }
-
-        // Did not roll any drops
-        return null;
+        
+        // Randomly choose drop from Drop card pool
+        return retDrop.cardDropsPool[Random.Range(0, retDrop.cardDropsPool.Count)];
     }
 }

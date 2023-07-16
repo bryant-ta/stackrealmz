@@ -1,8 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
 // GameManager singleton handles day cycle
 // Load Order: priority in script load order (otherwise _instance might not be set when used)
@@ -21,13 +21,18 @@ public class GameManager : MonoBehaviour {
     // Time Vars
     public int TimeScale => _timeScale;
     [SerializeField] int _timeScale;
-    public int dayDuration = 1;
-    public int nightDuration = 1;
-    public Image timeBarFill;
+    [SerializeField] int dayDuration = 1;
+    [SerializeField] int nightDuration = 1;
+    [SerializeField] float curTime;
     
     // Life Vars
     public Health playerLife;
 
+    // Mana Vars
+    public int Mana => curMana;
+    [SerializeField] int curMana; 
+    [SerializeField] int maxMana;
+    
     // Money Vars
     public int Money => _money;
     [SerializeField] int _money;
@@ -49,11 +54,13 @@ public class GameManager : MonoBehaviour {
 
     void Start() {
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, LostGame);
+        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EnableManaGen);
+        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableManaGen);
         
         StartCoroutine(GameLoop());
 
         // Debug
-        ModifyMoney(3);
+        ModifyMoney(10);
     }
 
     IEnumerator GameLoop() {
@@ -64,13 +71,16 @@ public class GameManager : MonoBehaviour {
     }
 
     IEnumerator TimeCycle(float duration, UnityEvent endEvent) {
-        while (timeBarFill.fillAmount < 1) {
-            timeBarFill.fillAmount += (float) TimeScale / duration * Time.deltaTime;
+        while (curTime < duration) {
+            curTime += Time.deltaTime * _timeScale;
+            UIManager.Instance.UpdateTimeProgressBar(curTime / duration);
             yield return null;
         }
 
-        timeBarFill.fillAmount = 0f;
+        curTime = 0;
+        UIManager.Instance.UpdateTimeProgressBar(curTime / duration);
         endEvent.Invoke();
+        
 
         // if (doEating) {
         //     foreach (Animal v in animals) {
@@ -100,6 +110,36 @@ public class GameManager : MonoBehaviour {
             _timeScale = n;
         }
     }
+    
+    // Mana funcs
+    void EnableManaGen() { CombatClock.onTick.AddListener(IncrementMana); }
+    void DisableManaGen() { CombatClock.onTick.RemoveListener(IncrementMana); ModifyMana(-curMana);}
+    void FreezeManaGen() { CombatClock.onTick.RemoveListener(IncrementMana);}   // used to stop gen but not reset mana
+    public void ModifyMana(int value) {
+        int newMana = curMana + value;
+        if (newMana < 0) {
+            curMana = 0;
+        } else if (newMana > maxMana) {
+            curMana = maxMana;
+        } else {
+            curMana = newMana;
+        }
+
+        ManaArgs args = new ManaArgs() {curMana = this.curMana, maxMana = this.maxMana};
+        EventManager.Invoke(gameObject, EventID.ModifyMana, args);
+    }
+    public void IncrementMana() { ModifyMana(1);}
+    public void ModifyMaxMana(int value) {
+        int newMaxMana = maxMana + value;
+        if (newMaxMana < 1) {
+            maxMana = 1;
+        } else {
+            maxMana = newMaxMana;
+        }
+
+        ManaArgs args = new ManaArgs() {curMana = this.curMana, maxMana = this.maxMana};
+        EventManager.Invoke(gameObject, EventID.ModifyMaxMana, args);
+    }
 
     public bool ModifyMoney(int value) {
         int newMoney = _money + value;
@@ -112,4 +152,9 @@ public class GameManager : MonoBehaviour {
         
         return true;
     }
+}
+
+public struct ManaArgs {
+    public int curMana;
+    public int maxMana;
 }

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class AnimalUI : CardUI {
     public Animal mAnimal;
     
+    public TextMeshProUGUI manaCostText;
     public TextMeshProUGUI hpText;
     public TextMeshProUGUI attackText;
 
@@ -14,18 +15,23 @@ public class AnimalUI : CardUI {
 
     void Start() {
         base.Start();
+        manaCostText.text = mAnimal.animalData.manaCost.ToString();
         hpText.text = mAnimal.animalData.hp.ToString();
         attackText.text = mAnimal.animalData.atkDmg.ToString();
 
-        EventManager.Subscribe<int>(gameObject, EventID.Heal, UpdateHPText);
-        EventManager.Subscribe<int>(gameObject, EventID.Damage, UpdateHPText);
-        EventManager.Subscribe<int>(gameObject, EventID.SetHp, UpdateHPText);
+        EventManager.Subscribe<int>(gameObject, EventID.ModifyMana, UpdateManaCostText);
+        EventManager.Subscribe<int>(gameObject, EventID.Heal, UpdateHpText);
+        EventManager.Subscribe<int>(gameObject, EventID.Damage, UpdateHpText);
+        EventManager.Subscribe<int>(gameObject, EventID.SetHp, UpdateHpText);
+        EventManager.Subscribe<int>(gameObject, EventID.SetAttack, UpdateAttackText);
         EventManager.Subscribe<CombatTickerArgs>(gameObject, EventID.AttackTick, UpdateAttackBar);
         EventManager.Subscribe<CombatTickerArgs>(gameObject, EventID.AbilityTick, UpdateAbilityBar);
-        EventManager.Subscribe<int>(gameObject, EventID.SetAttack, UpdateAttackText);
     }
 
-    void UpdateHPText(int val) {
+    void UpdateManaCostText(int val) {
+        manaCostText.text = val.ToString();
+    } 
+    void UpdateHpText(int val) {
         hpText.text = val.ToString();
     }
     void UpdateAttackText(int val) {

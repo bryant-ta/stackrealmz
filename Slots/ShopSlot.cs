@@ -11,11 +11,15 @@ public class ShopSlot : Slot
         Restock();
     }
 
-    public override Transform PickUp(bool isPlayerCalled = false) {
+    public override bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
+        return false;
+    }
+
+    public override Transform PickUp(bool isPlayerCalled = false, bool doEventInvoke = true) {
         if (GameManager.Instance.Money < price) return null;
         GameManager.Instance.ModifyMoney(-price);
         
-        Transform ret = base.PickUp();
+        Transform ret = base.PickUp(isPlayerCalled);
         if (ret == null) return null;
         
         Restock();
@@ -30,7 +34,8 @@ public class ShopSlot : Slot
 
             if (remainingQuantity > 0) remainingQuantity--;
         } else {
-            isLocked = true;
+            canPlace = false;
+            canPickUp = false;
         }
     }
 }

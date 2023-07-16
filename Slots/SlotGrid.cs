@@ -7,7 +7,7 @@ public class SlotGrid : MonoBehaviour {
 
     public GameObject slotPrefab;
 
-    void Start() {
+    void Awake() {
         SetupSlotGrid();
     }
 
