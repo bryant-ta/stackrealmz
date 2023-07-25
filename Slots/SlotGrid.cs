@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class SlotGrid : MonoBehaviour {
     public Slot[,] slotGrid;
+
+    public int Width => width;
+    public int Height => height;
     [SerializeField] int width, height;
 
     public GameObject slotPrefab;
@@ -38,7 +41,8 @@ public class SlotGrid : MonoBehaviour {
 
         return slotGrid[targetX, targetY];
     }
-
+    
+    // Returns slot using absolute position. Can mirror selected pos over middle dividing line, used for enemy targetting.
     public Slot SelectSlot(Vector2Int pos, bool flip) {
         if (flip) pos.x = Math.Abs(pos.x - width + 1);
         

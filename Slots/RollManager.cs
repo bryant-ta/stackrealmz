@@ -73,9 +73,9 @@
      void CleanUpCards() {
          foreach (Slot slot in rollSlotGrid.slotGrid) {
              // do not reinvoked pickup event since that triggers this func
-             Transform slotCardTransform = slot.PickUp(false, false);
-             if (slotCardTransform != null) {
-                 Destroy(slotCardTransform.gameObject);
+             Transform slotStackTransform = slot.PickUp(false, false);
+             if (slotStackTransform) {
+                 Destroy(slotStackTransform.gameObject);
              }
          }
      }

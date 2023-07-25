@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Cards/Card")]
+[CreateAssetMenu(menuName = "Cards/SO_Card")]
 public class SO_Card : ScriptableObject {
     public new string name;
     public int value;

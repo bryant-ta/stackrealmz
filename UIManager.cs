@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 // UIManager singleton handles global UI elements
@@ -17,10 +18,10 @@ public class UIManager : MonoBehaviour {
     public Image manaBarFill;
     public TextMeshProUGUI manaText;
 
-    // Recipe Viewer
-    public GameObject recipeViewer;
-    public TextMeshProUGUI recipeProductText;
-    public TextMeshProUGUI recipeMaterialsText;
+    // Inspector
+    public GameObject inspectorObj;
+    public TextMeshProUGUI inspectorHeaderText;
+    public TextMeshProUGUI inspectorBodyText;
     public GameObject worldBackground; // for hiding recipe viewer
     public GameObject craftsRecipePanel;
     public Transform craftsGrid;
@@ -48,9 +49,9 @@ public class UIManager : MonoBehaviour {
         EventManager.Subscribe<ManaArgs>(gameMngr.gameObject, EventID.ModifyMana, UpdateManaBar);
         EventManager.Subscribe<ManaArgs>(gameMngr.gameObject, EventID.ModifyMaxMana, UpdateManaBar);
 
-        // Recipe Viewer
-        EventManager.Subscribe<SO_Card>(gameObject, EventID.TertiaryDown, UpdateRecipeViewer);
-        EventManager.Subscribe(worldBackground, EventID.TertiaryDown, HideRecipeViewer);
+        // Inspector
+        EventManager.Subscribe<Card>(gameObject, EventID.TertiaryDown, UpdateInspector);
+        EventManager.Subscribe(worldBackground, EventID.TertiaryDown, HideInspector);
     }
 
     // TODO: Consider separating into 2 objects when learning more about UI
@@ -69,24 +70,27 @@ public class UIManager : MonoBehaviour {
         manaText.text = args.curMana.ToString();
     }
 
-    void UpdateRecipeViewer(SO_Card targetCard) {
-        recipeViewer.SetActive(true);
-        
-        // Target recipe
-        string materialsText = "";
-        List<Recipe> targetRecipes = CardFactory.LookupRecipesWithProduct(targetCard);
-        foreach (Recipe r in targetRecipes) {
-            materialsText += "> ";
-            foreach (string s in r.materials) {
-                materialsText += s + ", ";
-            }
+    void UpdateInspector(Card targetCard) {
+        inspectorObj.SetActive(true);
 
-            materialsText = materialsText.Remove(materialsText.Length - 2);
-            materialsText += "\n";
+        string bodyText = "";
+        if (targetCard is Animal a && a.isInCombat) {       // Show effects on Animal
+            bodyText = a.EffectCtrl.ActiveEffectsToString();
+        } else {                                            // Show target recipe
+            List<Recipe> targetRecipes = CardFactory.LookupRecipesWithProduct(targetCard.cardData);
+            foreach (Recipe r in targetRecipes) {
+                bodyText += "> ";
+                foreach (string s in r.materials) {
+                    bodyText += s + ", ";
+                }
+
+                bodyText = bodyText.Remove(bodyText.Length - 2);
+                bodyText += "\n";
+            }
         }
 
-        recipeProductText.text = targetCard.name;
-        recipeMaterialsText.text = materialsText;
+        inspectorHeaderText.text = targetCard.name;
+        inspectorBodyText.text = bodyText;
         
         // // TODO: determine if this is even needed, currently broken
         // // Crafts recipe
@@ -103,7 +107,7 @@ public class UIManager : MonoBehaviour {
         //     craftsPanelText.text = craftsText;
         // }
     }
-    void HideRecipeViewer() {
-        recipeViewer.SetActive(false);
+    void HideInspector() {
+        inspectorObj.SetActive(false);
     }
 }

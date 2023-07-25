@@ -53,14 +53,15 @@ public class GameManager : MonoBehaviour {
     }
 
     void Start() {
-        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, LostGame);
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EnableManaGen);
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableManaGen);
+        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, LostGame);
         
         StartCoroutine(GameLoop());
 
         // Debug
         ModifyMoney(10);
+        ModifyMana(5);
     }
 
     IEnumerator GameLoop() {
@@ -113,7 +114,10 @@ public class GameManager : MonoBehaviour {
     
     // Mana funcs
     void EnableManaGen() { CombatClock.onTick.AddListener(IncrementMana); }
-    void DisableManaGen() { CombatClock.onTick.RemoveListener(IncrementMana); ModifyMana(-curMana);}
+    void DisableManaGen() { 
+        CombatClock.onTick.RemoveListener(IncrementMana); 
+        ModifyMana(-curMana);
+    }
     void FreezeManaGen() { CombatClock.onTick.RemoveListener(IncrementMana);}   // used to stop gen but not reset mana
     public void ModifyMana(int value) {
         int newMana = curMana + value;

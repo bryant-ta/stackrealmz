@@ -28,7 +28,7 @@ public class Card : MonoBehaviour {
     }
 
     void ActivateRecipeViewer() {
-        EventManager.Invoke(UIManager.Instance.gameObject, EventID.TertiaryDown, cardData);
+        EventManager.Invoke(UIManager.Instance.gameObject, EventID.TertiaryDown, this);
     }
 
     void OnEnable() { GameManager.Instance.cards.Add(this); }

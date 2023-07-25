@@ -3,21 +3,26 @@ using UnityEngine;
 
 public class CombatSlot : Slot
 {
+    public Animal Animal { get => animal; private set { animal = value; } }
+    [SerializeField] protected Animal animal;
+
+    public bool isAllySlot;
     public Terrain terrain;
     
     public override bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
-        if (!stack.GetTopCard().TryGetComponent(out Animal animal)) return false;
-        if (isPlayerCalled) {
-            if (GameManager.Instance.Mana >= animal.manaCost.Value) {
-                GameManager.Instance.ModifyMana(-animal.manaCost.Value);
-            } else {
-                return false;
-            }
-        } 
-            
+        if (!stack.GetTopCard().TryGetComponent(out Animal a)) return false;
+        if (isPlayerCalled && GameManager.Instance.Mana < a.manaCost.Value) return false;
+
         if (!base.PlaceAndMove(stack, isPlayerCalled)) return false;
-            
+
+        if (isPlayerCalled) {
+            GameManager.Instance.ModifyMana(-a.manaCost.Value);
+        }
+
+        animal = a;
         animal.StartCombatState();
+        animal.Play();
+        
         return true;
     }
 
@@ -25,10 +30,9 @@ public class CombatSlot : Slot
         Transform ret = base.PickUp(isPlayerCalled);
         if (ret == null) return null;
         
-        if (ret.TryGetComponent(out Animal animal)) {
-            animal.EndCombatState();
-        }
-        
+        animal.EndCombatState();
+        animal = null;
+
         return ret;
     }
 }

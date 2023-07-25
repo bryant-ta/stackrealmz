@@ -1,70 +1,98 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
+// EffectController manages all active effects on the Animal it is attached to
 [RequireComponent(typeof(Animal))]
-public class EffectController : MonoBehaviour
-{
-    List<Effect> curEffects = new List<Effect>();
-    List<Effect> oneTimeCurEffects = new List<Effect>();
+public class EffectController : MonoBehaviour {
+    public readonly List<Effect> permEffects = new List<Effect>();
+    public readonly List<Effect> tempEffects = new List<Effect>();
+    public readonly List<Effect> durationEffects = new List<Effect>();
 
     Animal mAnimal;
 
     void Start() {
-        mAnimal = GetComponent<Animal>();
+        mAnimal = GetComponent<Animal>(); 
         
-        CombatClock.onTick.AddListener(ExecuteEffects);
+        EventManager.Subscribe(gameObject, EventID.ExitCombat, ResetEffects);
     }
 
-    void ExecuteEffects() {
-        foreach (Effect e in curEffects.ToList()) {
-            print(e.name + " " + e.remainingDuration);
-            if (e.overTime) {
-                e.effect.Execute(mAnimal, e.baseValue);
-            }
-
-            e.remainingDuration--;
-            if (e.remainingDuration == 0) {
-                e.effect.Remove(mAnimal);
-                curEffects.Remove(e);
-            }
-        }
-    }
-
-    // AddEffect handles any effects with durations
+    // AddEffect handles input effect based on its effect permanence
+    //   note: used enum instead of derived classes (PermEffect, TempEffect...) bc ExecuteEffect would need to get
+    //   more complex to handle Effects with remainingDuration - not worth it
     public void AddEffect(Effect e) {
-        curEffects.Add(e);
-
-        if (!e.overTime) {
-            e.effect.Execute(mAnimal, e.baseValue);
+        switch (e.effectPermanence) {
+            case EffectPermanence.Permanent:
+                AddPermEffect(e);
+                break;
+            case EffectPermanence.Temporary:
+                AddTempEffect(e);
+                break;
+            case EffectPermanence.Duration:
+                AddDurationEffect(e);
+                break;
         }
     }
 
-    // AddEffectPerm executes a permanent effect on mAnimal
-    public void AddEffectPerm(Effect e) {
-        if (e.remainingDuration > 0 || e.overTime) { Debug.LogError("AddEffectPerm(): trying to add non-permanent effect");}
-        e.effect.Execute(mAnimal, e.baseValue);
+    // AddPermEffect handles any permanent effects (execute once, never removed)
+    public void AddPermEffect(Effect e) {
+        if (e.remainingDuration > 0) {
+            Debug.LogError("AddPermEffect() cannot be used with non-permanent effect");
+            return;
+        }
+
+        e.effectFunc.Execute(mAnimal, e.baseValue);
+        permEffects.Add(e);
     }
-}
+    // AddTempEffect handles any one time effects (execute once, removeable)
+    public void AddTempEffect(Effect e) {
+        if (e.remainingDuration == 0) {
+            Debug.LogError("AddTempEffect() cannot be used with permanent effect");
+            return;
+        }
+        
+        e.effectFunc.Execute(mAnimal, e.baseValue);
+        tempEffects.Add(e);
+    }
+    // AddDurationEffect handles any over time effects (execute multiple times over duration, removeable)
+    public void AddDurationEffect(Effect e) {
+        if (e.remainingDuration == 0) {
+            Debug.LogError("AddDurationEffect() cannot be used with permanent effect");
+            return;
+        }
+        
+        durationEffects.Add(e);
+    }
 
-[Serializable]
-public class Effect {
-    [SerializeField] public string name;
-    [SerializeField] public int baseValue;
-    [SerializeField] public int remainingDuration;
-    [SerializeField] public bool overTime;
+    public bool RemoveEffect(Effect e) {
+        e.effectFunc.Remove(mAnimal);
 
-    [SerializeField] public EffectType effectType;
-    public IEffect effect;
+        return tempEffects.Remove(e) || durationEffects.Remove(e);
+    }
+    public void ResetEffects() {                // TODO: possible inconsistent execution order for remove effects since it's not executed by EffectManager... leaving for now
+        foreach (Effect e in tempEffects) {
+            e.effectFunc.Remove(mAnimal);
+        }
+        tempEffects.Clear();
+        
+        foreach (Effect e in durationEffects) {
+            e.effectFunc.Remove(mAnimal);
+        }
+        durationEffects.Clear();
+    }
 
-    public Effect(string name, int baseValue, int remainingDuration, bool overTime, EffectType effectType) {
-        this.name = name;
-        this.baseValue = baseValue;
-        this.remainingDuration = remainingDuration;
-        this.overTime = overTime;
+    public string ActiveEffectsToString() {
+        string ret = "";
+        foreach (Effect e in durationEffects) {
+            ret += string.Format("{0}: {1} ({2} turns left)\n", e.name, e.baseValue, e.remainingDuration);
+        }
+        foreach (Effect e in tempEffects) {
+            ret += string.Format("{0}: {1} ({2} turns left)\n", e.name, e.baseValue, e.remainingDuration);
+        }
+        foreach (Effect e in permEffects) {
+            ret += string.Format("{0}: {1}\n", e.name, e.baseValue);
+        }
 
-        effect = EffectTypeLookUp.LookUp[effectType];
+        return ret;
     }
 }

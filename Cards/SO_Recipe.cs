@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Cards/Recipe")]
+[CreateAssetMenu(menuName = "Cards/SO_Recipe")]
 public class SO_Recipe : ScriptableObject {
     public int id;
     public List<SO_Card> products = new List<SO_Card>();

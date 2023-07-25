@@ -19,7 +19,7 @@ public class AnimalUI : CardUI {
         hpText.text = mAnimal.animalData.hp.ToString();
         attackText.text = mAnimal.animalData.atkDmg.ToString();
 
-        EventManager.Subscribe<int>(gameObject, EventID.ModifyMana, UpdateManaCostText);
+        EventManager.Subscribe<int>(gameObject, EventID.SetManaCost, UpdateManaCostText);
         EventManager.Subscribe<int>(gameObject, EventID.Heal, UpdateHpText);
         EventManager.Subscribe<int>(gameObject, EventID.Damage, UpdateHpText);
         EventManager.Subscribe<int>(gameObject, EventID.SetHp, UpdateHpText);

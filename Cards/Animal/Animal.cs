@@ -1,17 +1,21 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(Health))]
 public class Animal : Card {
     public SO_Animal animalData;
 
-    [SerializeField] public Stat manaCost;
-    [SerializeField] public Stat atkDmg;
-    [SerializeField] public Stat atkSpd;
-    // [SerializeField] public Stat ablPwr;
-    // [SerializeField] public Stat ablCd;
+    public Health health;
+    public Stat manaCost;
+    public Stat atkDmg;
+    public Stat speed;
+    // public Stat ablPwr;
+    // ublic Stat ablCd;
 
-    IAttack attack;
+    public Attack attack;
+    public CardText cardText;
+
     CombatTicker attackTicker;
     IAbility ability;
     CombatTicker abilityTicker;
@@ -19,20 +23,38 @@ public class Animal : Card {
     public bool isEnemy;
     public bool isInCombat;
 
+    public EffectController EffectCtrl => effectCtrl;
+    EffectController effectCtrl;
+
     new void Start() {
         Setup(animalData);
         manaCost = new Stat(animalData.manaCost);
         atkDmg = new Stat(animalData.atkDmg);
-        atkSpd = new Stat(animalData.atkSpd);
+        speed = new Stat(animalData.speed);
         // ablCd = new Stat(animalData.ablCd);
         // ablPwr = new Stat(animalData.ablPwr);
 
-        attack = AttackTypeLookUp.LookUp[animalData.atkType];
+        cardText = animalData.cardText;
+        cardText.effect.effectFunc = EffectTypeLookUp.LookUp[cardText.effect.effectType];
+
+        attack = animalData.attack;
+        attack.attackFunc = AttackTypeLookUp.LookUp[attack.attackType];
+        
         ability = AbilityTypeLookUp.LookUp[animalData.abilityType];
+
+        effectCtrl = GetComponent<EffectController>();
+        if (!effectCtrl) Debug.LogError("No EffectController found for this Animal");
         
         EventManager.Subscribe(gameObject, EventID.Death, Death);
         EventManager.Subscribe(gameObject, EventID.AttackReady, Attack);
         EventManager.Subscribe(gameObject, EventID.SecondaryDown, Ability);
+        
+        EventManager.Subscribe(gameObject, cardText.condition, TriggerCardText);
+    }
+
+    public void Play() {
+        EffectManager.Instance.RegisterEffectOrder(this, cardText.condition);
+        EventManager.Invoke(gameObject, EventID.CardPlayed);
     }
 
     void Attack() {
@@ -46,12 +68,19 @@ public class Animal : Card {
         // if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
         int dmg = atkDmg.Value * terrainModifier;
 
-        if (!attack.Attack(mSlot, dmg, isEnemy)) {
+        if (!attack.attackFunc.Attack(attack.targetType, mSlot as CombatSlot, dmg, isEnemy)) {
             attackTicker.Start();   // hit nothing
         } else {
             attackTicker.Reset();   // hit something, reset timer
             attackTicker.Start();
         }
+    }
+
+    void TriggerCardText() {
+        EventManager.Invoke(gameObject, cardText.condition, new EffectOrder() {
+            origin = this,
+            cardText = cardText,
+        });
     }
 
     void Step() {
@@ -95,7 +124,7 @@ public class Animal : Card {
         // TODO: ensure atkSpd/ablCd correctly updates tickers
         isInCombat = true;
         
-        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, atkSpd.Value, false);
+        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, speed.Value, false);
         // abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
 
         EventManager.Invoke(gameObject, EventID.EnterCombat);

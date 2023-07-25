@@ -56,16 +56,16 @@ public class Slot : MonoBehaviour {
             m.IsStackable = cardWasStackable;
             cardWasStackable = false;
         }
-        Card c = card;
-        
+
         // Set slot fields
+        Stack s = stack;
         stack = null;
         card = null;
 
         // Send event
         if (doEventInvoke) EventManager.Invoke(gameObject, EventID.SlotPickedUp);
         
-        return c.transform;
+        return s.transform;
     }
 
     public bool IsEmpty() {

@@ -6,7 +6,7 @@ public class Food : Card {
     new void Start() {
         Setup(foodData);
         foodEffect = foodData.effect;
-        foodEffect.effect = EffectTypeLookUp.LookUp[foodEffect.effectType];
+        foodEffect.effectFunc = EffectTypeLookUp.LookUp[foodEffect.effectType];
     }
 
     void OnEnable() { GameManager.Instance.foods.Add(this); }

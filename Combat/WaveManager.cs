@@ -8,17 +8,17 @@ using Random = UnityEngine.Random;
 public class WaveManager : MonoBehaviour {
     public static WaveManager Instance => _instance;
     static WaveManager _instance;
-    
+
     public SO_Battle battleData;
-    
+
     public int curWaveNum;
     public Battle battle;
-    
+
     [SerializeField] List<CombatSlot> spawnSlots = new List<CombatSlot>();
     Queue<SO_Animal> spawnQueue = new Queue<SO_Animal>();
     [SerializeField] List<CombatSlot> playSlots = new List<CombatSlot>();
 
-    [SerializeField] Transform cleanUpDepositPoint;
+    public Transform cleanUpDepositPoint;
 
     CombatTicker waveTicker;
     bool inBattle;
@@ -26,19 +26,18 @@ public class WaveManager : MonoBehaviour {
     void Awake() {
         if (_instance != null && _instance != this) {
             Destroy(gameObject);
-        }
-        else {
+        } else {
             _instance = this;
         }
     }
 
     void Start() {
         battle.waves = battleData.waves;
-        
+
         waveTicker = new CombatTicker(gameObject, EventID.WaveTick, EventID.EndWave, 10, false);
         waveTicker.Pause();
         EventManager.Subscribe(gameObject, EventID.EndWave, NextWave);
-        
+
         EventManager.Subscribe(gameObject, EventID.EnemyDied, DoCheckAllEnemiesDead);
         EventManager.Subscribe(GameManager.Instance.gameObject, EventID.Death, LostBattle);
     }
@@ -48,9 +47,9 @@ public class WaveManager : MonoBehaviour {
         foreach (CombatSlot slot in playSlots) {
             slot.canPlace = true;
         }
-        
+
         EventManager.Invoke(gameObject, EventID.StartBattle);
-        
+
         NextWave();
         StartCoroutine(SpawnLoop());
     }
@@ -70,12 +69,12 @@ public class WaveManager : MonoBehaviour {
         foreach (CombatSlot slot in playSlots) {
             slot.canPlace = false;
         }
-        
+
         if (spawnSlots.Count == 0) {
             Debug.LogError("No spawn slots registered");
             return;
         }
-        
+
         // Gather all player animals on combat grid into one stack
         SlotGrid combatGrid = spawnSlots[0].SlotGrid;
         Stack gatheredStack = null;
@@ -95,8 +94,8 @@ public class WaveManager : MonoBehaviour {
                     StartCoroutine(Utils.MoveCardToPoint(card, gatheredStack.CalculateStackPosition(card)));
                     slot.PickUp();
                 } else {
-                    slot.PickUp(card);
-                    Destroy(card.gameObject);
+                    Transform stackTransform = slot.PickUp(card);
+                    Destroy(stackTransform.gameObject);
                 }
             }
         }
@@ -111,7 +110,7 @@ public class WaveManager : MonoBehaviour {
         if (curWaveNum < battle.waves.Count) {
             curWaveNum += 1;
             StartWave(battle.waves[curWaveNum - 1]);
-        } else {    // No more waves, last wave timer finished... battle won
+        } else { // No more waves, last wave timer finished... battle won
             curWaveNum = 0;
             WonBattle();
         }
@@ -144,14 +143,14 @@ public class WaveManager : MonoBehaviour {
 
     IEnumerator SpawnEnemy(SO_Animal aSO, Slot spawnSlot) {
         Stack s = CardFactory.CreateEnemy(aSO);
-        yield return null;      // required for Animal to be fully setup/events registered before slot placement
+        yield return null; // required for Animal to be fully setup/events registered before slot placement
         spawnSlot.PlaceAndMove(s);
     }
 
-    void DoCheckAllEnemiesDead() { StartCoroutine(CheckAllEnemiesDead());}
+    void DoCheckAllEnemiesDead() { StartCoroutine(CheckAllEnemiesDead()); }
     IEnumerator CheckAllEnemiesDead() {
         // Killed all enemies in last wave
-        yield return null;      // wait for Animal to deregister from GameManger
+        yield return null; // wait for Animal to deregister from GameManger
         if (inBattle && GameManager.Instance.enemies.Count == 0 && curWaveNum == battle.waves.Count) {
             WonBattle();
         }
