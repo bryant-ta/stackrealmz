@@ -30,6 +30,7 @@ public enum EventID {
     SetHp = 203,
     SetMaxHp = 204,
     Death = 205,
+    SetArmor = 206,
     AnimalDied = 210,
     EnemyDied = 211,
     AttackReady = 220,      // Attack
@@ -80,7 +81,6 @@ public class EventManager : MonoBehaviour {
         Dictionary<EventID, Delegate> ownerObjEvents;
         if (oneParamEventsDict.TryGetValue(ownerObj, out ownerObjEvents)) {
             if (ownerObjEvents.ContainsKey(eventID)) {
-                // Delegate.Combine adds listeners - similar to event += listener
                 ownerObjEvents[eventID] = Delegate.Combine(ownerObjEvents[eventID], listener);
             } else {
                 ownerObjEvents[eventID] = listener;
@@ -91,23 +91,39 @@ public class EventManager : MonoBehaviour {
             oneParamEventsDict[ownerObj] = ownerObjEvents;
         }
     }
-
-    // public static void Unsubscribe<T>(object ownerObj, EventID eventID, Action<T> listener) {
-    //     Dictionary<EventID, Delegate> ownerObjEvents;
-    //     if (eventsDict.TryGetValue(ownerObj, out ownerObjEvents)) {
-    //         if (ownerObjEvents.ContainsKey(eventID)) {
-    //             // Delegate.Remove removes listeners - similar to event -= listener
-    //             ownerObjEvents[eventID] = Delegate.Remove(ownerObjEvents[eventID], listener);
-    //         }
-    //     }
-    // }
+    
+    public static void Unsubscribe(object ownerObj, EventID eventID, Action listener) {
+        Dictionary<EventID, Delegate> ownerObjEvents;
+        if (eventsDict.TryGetValue(ownerObj, out ownerObjEvents)) {
+            if (ownerObjEvents.ContainsKey(eventID)) {
+                // Delegate.Remove removes listener - similar to event -= listener
+                ownerObjEvents[eventID] = Delegate.Remove(ownerObjEvents[eventID], listener);
+                if (ownerObjEvents[eventID] == null) {
+                    eventsDict.Remove(ownerObj);
+                }
+            }
+        }
+    }
+    public static void Unsubscribe<T>(object ownerObj, EventID eventID, Action<T> listener) {
+        Dictionary<EventID, Delegate> ownerObjEvents;
+        if (oneParamEventsDict.TryGetValue(ownerObj, out ownerObjEvents)) {
+            if (ownerObjEvents.ContainsKey(eventID)) {
+                ownerObjEvents[eventID] = Delegate.Remove(ownerObjEvents[eventID], listener);
+                if (ownerObjEvents[eventID] == null) {
+                    oneParamEventsDict.Remove(ownerObj);
+                }
+            }
+        }
+    }
 
     public static void Invoke(object ownerObj, EventID eventID) {
         Dictionary<EventID, Delegate> ownerObjEvents;
         if (eventsDict.TryGetValue(ownerObj, out ownerObjEvents)) {
             if (ownerObjEvents.TryGetValue(eventID, out Delegate eventAction)) {
-                if (eventAction is Action) {
-                    (eventAction as Action).Invoke();
+                foreach (Delegate d in eventAction.GetInvocationList()) {   // c# v4 only has this to get combined delegates seemingly...
+                    if (d is Action) {
+                        (d as Action).Invoke();
+                    }
                 }
             }
         }
@@ -116,8 +132,10 @@ public class EventManager : MonoBehaviour {
         Dictionary<EventID, Delegate> ownerObjEvents;
         if (oneParamEventsDict.TryGetValue(ownerObj, out ownerObjEvents)) {
             if (ownerObjEvents.TryGetValue(eventID, out Delegate eventAction)) {
-                if (eventAction is Action<T>) {
-                    (eventAction as Action<T>).Invoke(eventData);
+                foreach (Delegate d in eventAction.GetInvocationList()) {
+                    if (d is Action<T>) {
+                        (d as Action<T>).Invoke(eventData);
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ using UnityEngine;
 public class Health : MonoBehaviour {
     public int hp;
     public int maxHp;
+    public int armor;
 
     void Start() {
         if (TryGetComponent(out Animal a)) {
@@ -12,6 +13,15 @@ public class Health : MonoBehaviour {
         }
     }
 
+    public void Damage(int value) {
+        if (armor > 0 && value > 0) {
+            ModifyArmor(-1);
+        } else {
+            ModifyHp(-value);
+        }
+    }
+    
+    // Positive input heals. Negative input damages.
     public void ModifyHp(int value) {
         int newHp = hp + value;
         if (newHp <= 0) {
@@ -52,5 +62,17 @@ public class Health : MonoBehaviour {
         maxHp = value;
         ModifyHp(value);
         EventManager.Invoke(gameObject, EventID.SetMaxHp, value);
+    }
+    
+    // Positive input raises armor. Negative input reduces armor.
+    public void ModifyArmor(int value) {
+        int newArmor = armor + value;
+        if (newArmor <= 0) {
+            armor = 0;
+        } else {
+            armor = newArmor;
+        }
+        
+        EventManager.Invoke(gameObject, EventID.SetArmor, armor);
     }
 }

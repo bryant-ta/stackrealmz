@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [RequireComponent(typeof(Health))]
 public class Animal : Card {
@@ -78,7 +77,7 @@ public class Animal : Card {
 
     void TriggerCardText() {
         EventManager.Invoke(gameObject, cardText.condition, new EffectOrder() {
-            origin = this,
+            originSlot = mSlot as CombatSlot,
             cardText = cardText,
         });
     }
@@ -116,8 +115,8 @@ public class Animal : Card {
             EventManager.Invoke(WaveManager.Instance.gameObject, EventID.EnemyDied);
         }
         
-        Destroy(gameObject);
         mStack.ExtractWithoutCraft(this);
+        Destroy(gameObject);
     }
     
     public void StartCombatState() {

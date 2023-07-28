@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +11,7 @@ public class EffectController : MonoBehaviour {
     Animal mAnimal;
 
     void Start() {
-        mAnimal = GetComponent<Animal>(); 
+        mAnimal = GetComponent<Animal>();
         
         EventManager.Subscribe(gameObject, EventID.ExitCombat, ResetEffects);
     }

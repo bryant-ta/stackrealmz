@@ -36,12 +36,14 @@ public static class TargetTypes {
         bool enemyCalled = origin.Animal.isEnemy;
 
         CombatSlot target;
+        Animal targetAnimal;
         switch (targetType) {
             case TargetType.Self:
                 targets.Add(origin.Animal);
                 return targets;
             case TargetType.Standard:
-                targets.Add(SelectStandard(combatGrid, origin));
+                targetAnimal = SelectStandard(combatGrid, origin);
+                if (targetAnimal) targets.Add(targetAnimal);
                 return targets;
             case TargetType.Forward:
                 target = combatGrid.Forward(origin, enemyCalled) as CombatSlot;

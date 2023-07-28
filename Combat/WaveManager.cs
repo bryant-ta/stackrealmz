@@ -40,6 +40,9 @@ public class WaveManager : MonoBehaviour {
 
         EventManager.Subscribe(gameObject, EventID.EnemyDied, DoCheckAllEnemiesDead);
         EventManager.Subscribe(GameManager.Instance.gameObject, EventID.Death, LostBattle);
+        
+        // Debug
+        StartBattle();
     }
 
     public void StartBattle() {

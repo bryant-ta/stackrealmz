@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 // See AttackTypes.cs for how to use.
 public enum EffectType {
@@ -12,6 +13,7 @@ public enum EffectType {
     ModifyBaseAttackEffect = 7,
     ModifySpeedEffect      = 8,
     ModifyBaseSpeedEffect  = 9,
+    ModifyArmorEffect = 10,
     
 }
 
@@ -27,6 +29,7 @@ public static class EffectTypeLookUp {
         {EffectType.ModifyBaseAttackEffect, new ModifyBaseAttackEffect()},
         {EffectType.ModifySpeedEffect, new ModifySpeedEffect()},
         {EffectType.ModifyBaseSpeedEffect, new ModifyBaseSpeedEffect()},
+        {EffectType.ModifyArmorEffect, new ModifyArmorEffect()},
     };
 }
 
@@ -39,7 +42,7 @@ public interface IEffect {
 
 public class DamageEffect : IEffect {
     public void Execute(Animal animal, int val) {
-        animal.health.ModifyHp(-val); // invokes event
+        animal.health.Damage(val); // invokes event
     }
 
     public void Remove(Animal animal) { return; }
@@ -142,6 +145,16 @@ public class ModifyBaseSpeedEffect : IEffect {
     public void Remove(Animal animal) {
         animal.speed.ChangeBaseValue(-modifierTotal);
         EventManager.Invoke(animal.gameObject, EventID.SetSpeed, animal.speed.Value);
+    }
+}
+
+public class ModifyArmorEffect : IEffect {
+    public void Execute(Animal animal, int val) {
+        animal.health.ModifyArmor(val);
+    }
+
+    public void Remove(Animal animal) {
+        return;
     }
 }
 

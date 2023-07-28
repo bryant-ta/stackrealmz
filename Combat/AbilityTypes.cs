@@ -25,7 +25,7 @@ public interface IAbility {
 
 public class NoneAbility : IAbility {
     public void Use(Slot originSlot, int val, bool flip) {
-        originSlot.Card.GetComponent<Health>().ModifyHp(val);
+        return;
     }
 }
 

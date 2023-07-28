@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -24,15 +23,18 @@ public class EffectManager : MonoBehaviour {
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableTriggerEffects);
     }
 
+    void Update() {
+        TriggerEffectOrders();
+    }
+
     /****************   Effect Order Management   ****************/
     
     public void RegisterEffectOrder(Animal origin, EventID condition) {
         EventManager.Subscribe<EffectOrder>(origin.gameObject, condition, AddEffectOrder);
     }
 
-    void AddEffectOrder(EffectOrder effectOrder) {
+    public void AddEffectOrder(EffectOrder effectOrder) {
         effectOrders.Add(effectOrder);
-        print("hello");
     }
     
     // TODO: Move executeDurationEffects loop to here to do them in priority order
@@ -43,21 +45,29 @@ public class EffectManager : MonoBehaviour {
     
     /****************   Effect Execution   ****************/
 
-    void EnableTriggerEffects() { 
-        CombatClock.onTick.AddListener(TriggerEffectOrders);
+    void EnableTriggerEffects() {
+        // CombatClock.onTick.AddListener(TriggerEffectOrders);
         CombatClock.onTick.AddListener(ExecuteDurationEffects);
     }
-    void DisableTriggerEffects() { 
-        CombatClock.onTick.RemoveListener(TriggerEffectOrders); 
+    void DisableTriggerEffects() {
+        // CombatClock.onTick.RemoveListener(TriggerEffectOrders); 
         CombatClock.onTick.RemoveListener(ExecuteDurationEffects);
         effectOrders.Clear();
     }
     
     void TriggerEffectOrders() {
-        foreach (EffectOrder eo in effectOrders){
-            List<Animal> targets = TargetTypes.GetTargets(eo.cardText.targetType, eo.origin.mSlot as CombatSlot, eo.cardText.targetGroup);
-            foreach (Animal a in targets) {
-                a.GetComponent<EffectController>().AddEffect(eo.cardText.effect);
+        foreach (EffectOrder eo in effectOrders) {
+            List<Animal> targets = new List<Animal>();
+            for (int i = 0; i < eo.cardText.numTargets; i++) {
+                List<Animal> t = TargetTypes.GetTargets(eo.cardText.targetType, eo.originSlot, eo.cardText.targetGroup);
+                if (t == null || t.Count == 0) continue;
+
+                targets = targets.Concat(t).ToList();
+            }
+            
+            for (int i = 0; i < targets.Count; i++) {
+                targets[i].EffectCtrl.AddEffect(eo.cardText.effect);
+                print("activating effect: " + eo.cardText.effect.name);
             }
         }
         
@@ -78,7 +88,7 @@ public class EffectManager : MonoBehaviour {
                     e.remainingDuration--;
 
                     if (e.remainingDuration == 0) {
-                        c.Animal.EffectCtrl.RemoveEffect(e);
+                        c.Animal.EffectCtrl. RemoveEffect(e);
                     }
                 }
             }
@@ -87,6 +97,6 @@ public class EffectManager : MonoBehaviour {
 }
 
 public struct EffectOrder {
-    public Animal origin;
+    public CombatSlot originSlot;
     public CardText cardText;
 }

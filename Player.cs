@@ -31,12 +31,14 @@ public class Player : MonoBehaviour {
                 if (hit.collider.gameObject.TryGetComponent(out IMoveable moveable)) {
                     HoldMoveable(moveable);
                 }
-                
-                EventManager.Invoke(gameObject, EventID.PrimaryDown, hit.collider.gameObject);
+
+                if (hit.collider.gameObject.TryGetComponent(out Card card)) {
+                    EventManager.Invoke(gameObject, EventID.PrimaryDown, card);
+                }
             }
         }
     }
-    
+
     public void OnSecondaryDown() {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
@@ -45,7 +47,7 @@ public class Player : MonoBehaviour {
                 EventManager.Invoke(hit.collider.gameObject, EventID.SecondaryDown);
             }
         }
-        
+
         EventManager.Invoke(gameObject, EventID.SecondaryDown);
     }
 
@@ -58,54 +60,58 @@ public class Player : MonoBehaviour {
             }
         }
     }
-    
-    public void OnPrimaryUp() {
-        DropMoveable(heldMoveable);
-    }
 
-    public void OnCameraZoom() {
-        
-    }
+    public void OnPrimaryUp() { DropMoveable(heldMoveable); }
+
+    public void OnCameraZoom() { }
 
     ////////////////////////////////    Targeting    ///////////////////////////////
 
-    void Start() {
+    void EnableTargetMode() {
         EventManager.Subscribe<Card>(gameObject, EventID.PrimaryDown, TargetSelected);
         EventManager.Subscribe(gameObject, EventID.SecondaryDown, CancelSelectTarget);
+    }
+    void DisableTargetMode() {
+        EventManager.Unsubscribe<Card>(gameObject, EventID.PrimaryDown, TargetSelected);
+        EventManager.Unsubscribe(gameObject, EventID.SecondaryDown, CancelSelectTarget);
     }
 
     bool isSelectingTarget = true;
     bool selectTargetCanceled = false;
-    Animal selectedAnimal = null;
-    public IEnumerator SelectTarget(EffectOrder effectOrder, Action<Animal> selectAnimal) {
+    CombatSlot selectedSlot = null;
+    public IEnumerator SelectTarget(Action<CombatSlot> selectSlot) {
         isSelectingTarget = true;
         selectTargetCanceled = false;
-        
+
+        EnableTargetMode();
+
         while (isSelectingTarget) {
-            Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            Debug.DrawLine(effectOrder.origin.transform.position, mousePosition);
+            // Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            // add visual effect of selecting here
             yield return null;
         }
-        
-        if (selectTargetCanceled) {         // card select canceled, return played card to village
-            CombatSlot slot = effectOrder.origin.mSlot as CombatSlot;
-            slot.PickUp();
-            StartCoroutine(Utils.MoveStackToPoint(effectOrder.origin.mStack,
-                WaveManager.Instance.cleanUpDepositPoint.position));
-        } else {                            // card selected, return that card if its valid
-            selectAnimal(selectedAnimal);
+
+        DisableTargetMode();
+
+        if (selectTargetCanceled) { // card select canceled
+            selectSlot(null);
+        } else { // card selected, return that card if its valid
+            selectSlot(selectedSlot);
         }
     }
 
     void TargetSelected(Card c) {
-        isSelectingTarget = false; 
-        selectedAnimal = c as Animal;   // unsafe
+        isSelectingTarget = false;
+        if (c is Animal animal)
+            selectedSlot = animal.mSlot as CombatSlot;
+        else
+            print("Target selected is not an Animal");
     }
     void CancelSelectTarget() {
         isSelectingTarget = false;
         selectTargetCanceled = true;
     }
-    
+
     ////////////////////////////////    Holding Cards    ///////////////////////////////
 
     void HoldMoveable(IMoveable c) {
@@ -125,6 +131,7 @@ public class Player : MonoBehaviour {
                     objTrans.position = Vector3.Lerp(objTrans.position, hit.point, Constants.CardDragSpeed * Time.deltaTime);
                 }
             }
+
             yield return null;
         }
     }
@@ -133,6 +140,7 @@ public class Player : MonoBehaviour {
         if (heldMoveable != null) {
             heldMoveable.Drop();
         }
+
         heldMoveable = null;
     }
 }

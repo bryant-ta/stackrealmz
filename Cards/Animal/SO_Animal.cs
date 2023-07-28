@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "Cards/SO_Animal")]
 public class SO_Animal : SO_Card {
@@ -36,10 +35,11 @@ public struct Attack {
 }
 
 [Serializable]
-public struct CardText {
+public class CardText {
     public EventID condition;
     public Effect effect;
     public TargetType targetType;
+    public int numTargets = 1;          // used for Random, Spells
     public Group targetGroup;       // optional
     public string text;
 }

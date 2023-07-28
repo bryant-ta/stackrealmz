@@ -37,7 +37,7 @@ public class StandardAttack : IAttack {
         // found targets, apply damage
         if (targets.Count > 0) {
             foreach (Animal a in targets) {
-                a.GetComponent<Health>().ModifyHp(-dmg);
+                a.health.Damage(dmg);
             }
             return true;
         }
