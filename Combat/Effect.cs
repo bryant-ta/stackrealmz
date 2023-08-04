@@ -6,19 +6,39 @@ public class Effect {
     public string name;
     public EffectType effectType;
     public EffectPermanence effectPermanence;
-
+    
     public int baseValue;
     public int remainingDuration;
-
+    public Card source;
+    
+    public SO_Card summonData;
+    
     public IEffect effectFunc;
 
-    public Effect(string name, EffectType effectType, EffectPermanence effectPermanence, int baseValue, int remainingDuration) {
+    public Effect(string name, EffectType effectType, EffectPermanence effectPermanence, int baseValue, int remainingDuration, Card source = null, SO_Card summonData = null) {
         this.name = name;
-        this.baseValue = baseValue;
+        this.effectType = effectType;
         this.effectPermanence = effectPermanence;
+        this.baseValue = baseValue;
         this.remainingDuration = remainingDuration;
+        this.source = source;
 
-        effectFunc = EffectTypeLookUp.LookUp[effectType];
+        this.summonData = summonData;
+        
+        effectFunc = EffectTypeLookUp.CreateEffect(effectType);
+    }
+
+    public Effect(Effect e) : this(e.name, e.effectType, e.effectPermanence, e.baseValue, e.remainingDuration, e.source, e.summonData) { }
+
+    // Returns true if this Effect has same name and source as input
+    public bool IsEqual(Effect e) {
+        return name == e.name && source == e.source;
+    }
+    
+    // Returns true if this Effect is the real aura effect of the input aura effect (is the effect placed on neighbors)
+    public bool IsAuraRealEffect(Effect auraEffect) {
+        return name == auraEffect.name && effectPermanence == EffectPermanence.Permanent &&
+               auraEffect.effectPermanence == EffectPermanence.Aura && source == auraEffect.source;
     }
 }
 
@@ -33,4 +53,5 @@ public enum EffectPermanence {
     Permanent = 0,
     Temporary = 1,
     Duration = 2,
+    Aura = 3,
 }

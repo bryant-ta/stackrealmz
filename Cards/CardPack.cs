@@ -6,7 +6,7 @@ public class CardPack : Card {
     public int numCards;
     public List<Drop> dropTable;
 
-    public void Start() {
+    new void Start() {
         Setup(cardPackData);
         numCards = cardPackData.numCards;
         dropTable = cardPackData.dropTable;

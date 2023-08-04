@@ -14,8 +14,7 @@ public class Slot : MonoBehaviour {
     
     public SlotGrid SlotGrid { get { return mSlotGrid; } private set { mSlotGrid = value; } }
     [SerializeField] protected SlotGrid mSlotGrid;
-
-
+    
     // PlaceAndMove handles registering a stack with the slot and physically moving stack's location to this Slot
     // Slots only allow stacks of one card (for now?)
     public virtual bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
@@ -41,13 +40,16 @@ public class Slot : MonoBehaviour {
         StartCoroutine(Utils.MoveStackToPoint(stack, new Vector3(0,0,-Constants.StackDepthOffset)));
         
         // Send event
-        EventManager.Invoke(gameObject, EventID.SlotPlaced);
+        EventManager.Invoke(gameObject, EventID.SlotPlaced, this);
+        // EventManager.Invoke(card.gameObject, EventID.CardPlaced);
 
         return true;
     }
 
-    public virtual Transform PickUp(bool isPlayerCalled = false, bool doEventInvoke = true) {
-        if (IsEmpty() || (isPlayerCalled && !canPickUp)) return null;
+    public bool PickUpCondition(bool isPlayerCalled = false) { return IsEmpty() || (isPlayerCalled && !canPickUp); }
+
+    public virtual Transform PickUpHeld(bool isPlayerCalled = false, bool endCombatState = false, bool doEventInvoke = true) {
+        if (PickUpCondition(isPlayerCalled)) return null;
         
         // Set card fields
         card.mSlot = null;
@@ -57,15 +59,27 @@ public class Slot : MonoBehaviour {
             cardWasStackable = false;
         }
 
+        // Send event
+        if (doEventInvoke) {
+            EventManager.Invoke(card.gameObject, EventID.CardPickedUp);
+            EventManager.Invoke(gameObject, EventID.SlotPickedUp, this);
+        }
+
         // Set slot fields
         Stack s = stack;
         stack = null;
         card = null;
-
-        // Send event
-        if (doEventInvoke) EventManager.Invoke(gameObject, EventID.SlotPickedUp);
         
         return s.transform;
+    }
+
+    public virtual Stack SpawnCard(SO_Card cardData) {
+        if (!IsEmpty()) return null;
+        
+        Stack s = CardFactory.CreateStack(transform.position, cardData);
+        PlaceAndMove(s);
+
+        return s;
     }
 
     public bool IsEmpty() {

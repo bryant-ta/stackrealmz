@@ -93,17 +93,6 @@ public class CardFactory : MonoBehaviour {
         return s;
     }
 
-    public static Stack CreateEnemy(SO_Animal aSO) {
-        Stack s = Instantiate(_stackBase).GetComponent<Stack>();
-        Animal a = Instantiate(_animalBase).GetComponent<Animal>();
-        a.animalData = aSO;
-        a.isEnemy = true;
-        
-        s.Place(a);
-
-        return s;
-    }
-
     public static Recipe LookupRecipe(List<string> materials) {
         string[] materialsArr = materials.OrderBy((x => x)).ToArray();
         foreach (Recipe r in _recipes) {

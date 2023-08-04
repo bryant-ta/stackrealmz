@@ -57,17 +57,32 @@ public class EffectManager : MonoBehaviour {
     
     void TriggerEffectOrders() {
         foreach (EffectOrder eo in effectOrders) {
-            List<Animal> targets = new List<Animal>();
-            for (int i = 0; i < eo.cardText.numTargets; i++) {
-                List<Animal> t = TargetTypes.GetTargets(eo.cardText.targetType, eo.originSlot, eo.cardText.targetGroup);
+            List<CombatSlot> targetSlots = new List<CombatSlot>();
+            for (int i = 0; i < eo.cardText.numTargetTimes; i++) {
+                List<CombatSlot> t = TargetTypes.GetTargets(eo.cardText.targetType, eo.originSlot, eo.cardText.targetGroup);
                 if (t == null || t.Count == 0) continue;
 
-                targets = targets.Concat(t).ToList();
+                targetSlots = targetSlots.Concat(t).ToList();
             }
+
+            // Effect Execution
             
-            for (int i = 0; i < targets.Count; i++) {
-                targets[i].EffectCtrl.AddEffect(eo.cardText.effect);
-                print("activating effect: " + eo.cardText.effect.name);
+            Effect e = eo.cardText.effect;
+            Animal effectOrigin = eo.originSlot.Animal;
+            if (e.effectType == EffectType.SummonEffect) {
+                // add empty adjacent slots as backup spawn slots
+                targetSlots = targetSlots.Concat(TargetTypes.GetTargets(TargetType.EmptyAdjacent, eo.originSlot)).ToList();
+                ExecuteSummonEffect(eo.cardText.effect, targetSlots);
+            } else if (e.effectPermanence == EffectPermanence.Aura) {
+                effectOrigin.EffectCtrl.AddAuraEffect(e);
+            } else {
+                for (int i = 0; i < targetSlots.Count; i++) {
+                    if (!targetSlots[i].IsEmpty()) {
+                        targetSlots[i].Animal.EffectCtrl.AddEffect(e);
+                    }
+
+                    print("activating effect: " + eo.cardText.effect.name);
+                }
             }
         }
         
@@ -84,13 +99,26 @@ public class EffectManager : MonoBehaviour {
                 
                 foreach (Effect e in c.Animal.EffectCtrl.durationEffects.ToList()) {
                     print(e.name + " " + e.remainingDuration);
-                    e.effectFunc.Execute(c.Animal, e.baseValue);
+                    e.effectFunc.Apply(c.Animal.mSlot as CombatSlot, new EffectArgs() { val = e.baseValue });
                     e.remainingDuration--;
 
                     if (e.remainingDuration == 0) {
                         c.Animal.EffectCtrl. RemoveEffect(e);
                     }
                 }
+            }
+        }
+    }
+    
+    // ExecuteSummonEffects handles spawning new cards in combat from summon effects.
+    // - Spawn location is determined by TargetType
+    // - Prioritizes spawn slots based on list order
+    // - If there are no more valid spawn slots, then chooses a random adjacent empty slot. If there is none, nothing will be spawned.
+    void ExecuteSummonEffect(Effect effect, List<CombatSlot> spawnSlots) {
+        foreach (CombatSlot spawnSlot in spawnSlots) {
+            Stack s = spawnSlot.SpawnCard(effect.summonData);
+            if (!s) {
+                Debug.LogError("ExecuteSummonEffect: tried spawning in non-empty slot");
             }
         }
     }

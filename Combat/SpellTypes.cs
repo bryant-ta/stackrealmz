@@ -43,7 +43,7 @@ public class MoveSpell : ISpell {
             Debug.LogError("Cannot execute MoveSpell without exactly 2 targets");
             return;
         }
-        
+
         targetSlots[0].SwapWithCombatSlot(targetSlots[1]);
     }
 }

@@ -21,6 +21,8 @@ public class WaveManager : MonoBehaviour {
     public Transform cleanUpDepositPoint;
 
     CombatTicker waveTicker;
+
+    public bool InBattle => inBattle;
     bool inBattle;
 
     void Awake() {
@@ -82,22 +84,22 @@ public class WaveManager : MonoBehaviour {
         SlotGrid combatGrid = spawnSlots[0].SlotGrid;
         Stack gatheredStack = null;
         bool first = true;
-        foreach (Slot slot in combatGrid.slotGrid) {
+        foreach (CombatSlot slot in combatGrid.slotGrid) {
             Card card = slot.Card;
             if (card) {
                 if (GameManager.Instance.animals.Contains(card)) {
                     if (first) {
                         gatheredStack = card.mStack;
-                        slot.PickUp();
+                        slot.PickUpHeld(false, true);
                         first = false;
                         continue;
                     }
 
                     card.mStack.PlaceAll(gatheredStack);
                     StartCoroutine(Utils.MoveCardToPoint(card, gatheredStack.CalculateStackPosition(card)));
-                    slot.PickUp();
+                    slot.PickUpHeld(false, true);
                 } else {
-                    Transform stackTransform = slot.PickUp(card);
+                    Transform stackTransform = slot.PickUpHeld(false, true);
                     Destroy(stackTransform.gameObject);
                 }
             }
@@ -136,18 +138,12 @@ public class WaveManager : MonoBehaviour {
             if (spawnQueue.Count > 0) {
                 CombatSlot spawnSlot = spawnSlots[Random.Range(0, spawnSlots.Count)];
                 if (spawnSlot.IsEmpty()) {
-                    StartCoroutine(SpawnEnemy(spawnQueue.Dequeue(), spawnSlot));
+                    spawnSlot.SpawnCard(spawnQueue.Dequeue());
                 }
             }
 
             yield return null;
         }
-    }
-
-    IEnumerator SpawnEnemy(SO_Animal aSO, Slot spawnSlot) {
-        Stack s = CardFactory.CreateEnemy(aSO);
-        yield return null; // required for Animal to be fully setup/events registered before slot placement
-        spawnSlot.PlaceAndMove(s);
     }
 
     void DoCheckAllEnemiesDead() { StartCoroutine(CheckAllEnemiesDead()); }

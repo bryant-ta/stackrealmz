@@ -9,12 +9,12 @@ public class Spell : Card {
 
     ISpell spellFunc;
     
-    void Start() {
+    new void Start() {
         Setup(spellData);
         manaCost = new Stat(spellData.manaCost);
         
         cardText = spellData.cardText;
-        cardText.effect.effectFunc = EffectTypeLookUp.LookUp[cardText.effect.effectType];
+        cardText.effect.effectFunc = EffectTypeLookUp.CreateEffect(cardText.effect.effectType);
 
         spellFunc = SpellTypeLookUp.LookUp[spellData.spellType];
         
@@ -31,29 +31,28 @@ public class Spell : Card {
 
     IEnumerator ExecuteSpell() {
         EventManager.Unsubscribe(gameObject, EventID.SecondaryDown, CastSpell);
-        
+
         List<CombatSlot> targetSlots = new List<CombatSlot>();
         CombatSlot targetSlot = null;
 
         // Select spell targets
-        print("Spell " + spellData.name + "ready! Select " + cardText.numTargets + " targets.");
-        for (int i = 0; i < cardText.numTargets; i++) {
-            yield return null;
-            yield return StartCoroutine(Player.Instance.SelectTarget((ret) => {
-                targetSlot = ret;
-            }));
-
-            // Target select canceled, abort
-            if (!targetSlot) {
-                UnreadySpell();
-                yield break;
-            }
-            
-            targetSlots.Add(targetSlot);
+        print("Spell " + spellData.name + "ready! Select " + cardText.numTargetTimes + " targets.");
+        yield return StartCoroutine(Player.Instance.SelectTargets(
+            cardText.targetType, 
+            cardText.numTargetTimes,
+            (ret) => { targetSlots = ret; }, 
+            cardText.targetGroup));
+        
+        // Target select canceled, abort
+        if (targetSlots == null) {
+            UnreadySpell();
+            yield break;
         }
         
         // Execute spell on targets
-        spellFunc.Execute(targetSlots, cardText);
+        if (targetSlots.Count > 0) {
+            spellFunc.Execute(targetSlots, cardText);
+        }
         
         EventManager.Subscribe(gameObject, EventID.SecondaryDown, CastSpell);
     }

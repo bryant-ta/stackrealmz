@@ -89,8 +89,8 @@ public class Stack : MonoBehaviour {
         
         int craftFinished = 0;
         // Delegate shortened syntax for returning a value from coroutine
-        yield return StartCoroutine(DoCraftTime(validRecipe.craftTime, (res) => {
-            craftFinished = res;
+        yield return StartCoroutine(DoCraftTime(validRecipe.craftTime, (ret) => {
+            craftFinished = ret;
         }));
 
         if (craftFinished == 1 && !isChanged) {

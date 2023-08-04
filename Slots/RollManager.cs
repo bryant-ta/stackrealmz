@@ -18,7 +18,7 @@
          LoadRealmCards(Realm.Earth, rollTableB);
          
          foreach (Slot slot in rollSlotGrid.slotGrid) {
-             EventManager.Subscribe(slot.gameObject, EventID.SlotPickedUp, CleanUpCards);
+             EventManager.Subscribe<Slot>(slot.gameObject, EventID.SlotPickedUp, CleanUpCards);
          }
      }
 
@@ -63,17 +63,18 @@
              foreach (Slot slot in rollSlotGrid.slotGrid) {
                  SO_Card cSO = CardFactory.RollDrop(rollTable);
 
-                 Stack s = CardFactory.CreateStack(slot.transform.position, cSO);
-                 slot.PlaceAndMove(s);
+                 slot.SpawnCard(cSO);
              }
          }
      }
 
-     // Clears card roll slots. Returns true if a card was already taken from the roll grid.
-     void CleanUpCards() {
+     // Clears card roll slots. Skips input slot if provided, used to ignore slot that was already taken from.
+     void CleanUpCards(Slot skipSlot = null) {
          foreach (Slot slot in rollSlotGrid.slotGrid) {
+             if (slot == skipSlot) continue;
+             
              // do not reinvoked pickup event since that triggers this func
-             Transform slotStackTransform = slot.PickUp(false, false);
+             Transform slotStackTransform = slot.PickUpHeld(false, false, false);
              if (slotStackTransform) {
                  Destroy(slotStackTransform.gameObject);
              }

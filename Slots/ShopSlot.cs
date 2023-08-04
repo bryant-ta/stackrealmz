@@ -15,11 +15,11 @@ public class ShopSlot : Slot
         return false;
     }
 
-    public override Transform PickUp(bool isPlayerCalled = false, bool doEventInvoke = true) {
+    public override Transform PickUpHeld(bool isPlayerCalled = false, bool endCombatState = false, bool doEventInvoke = true) {
         if (GameManager.Instance.Money < price) return null;
         GameManager.Instance.ModifyMoney(-price);
         
-        Transform ret = base.PickUp(isPlayerCalled);
+        Transform ret = base.PickUpHeld(isPlayerCalled);
         if (ret == null) return null;
         
         Restock();
@@ -29,8 +29,7 @@ public class ShopSlot : Slot
 
     void Restock() {
         if (infiniteQuantity || remainingQuantity > 0) {
-            Stack s = CardFactory.CreateStack(transform.position, stockCardData);
-            base.PlaceAndMove(s);
+            SpawnCard(stockCardData);
 
             if (remainingQuantity > 0) remainingQuantity--;
         } else {

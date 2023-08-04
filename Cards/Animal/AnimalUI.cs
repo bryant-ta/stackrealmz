@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,19 +8,19 @@ public class AnimalUI : CardUI {
     public Animal mAnimal;
     
     public TextMeshProUGUI manaCostText;
+    
     public TextMeshProUGUI hpText;
     public TextMeshProUGUI armorText;
+    public TextMeshProUGUI poisonText;
+    
     public TextMeshProUGUI attackText;
 
     public Image attackBarFill;
+    public Image attackBarBack;
     public Image abilityBarFill;
+    public Image abilityBarBack;
 
-    void Start() {
-        base.Start();
-        manaCostText.text = mAnimal.animalData.manaCost.ToString();
-        hpText.text = mAnimal.animalData.hp.ToString();
-        attackText.text = mAnimal.animalData.atkDmg.ToString();
-
+    void Awake() {
         EventManager.Subscribe<int>(gameObject, EventID.SetManaCost, UpdateManaCostText);
         EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowManaCostText);
         EventManager.Subscribe(gameObject, EventID.EnterCombat, HideManaCostText);
@@ -28,10 +29,24 @@ public class AnimalUI : CardUI {
         EventManager.Subscribe<int>(gameObject, EventID.Damage, UpdateHpText);
         EventManager.Subscribe<int>(gameObject, EventID.SetHp, UpdateHpText);
         EventManager.Subscribe<int>(gameObject, EventID.SetArmor, UpdateArmorText);
+        EventManager.Subscribe<int>(gameObject, EventID.SetPoison, UpdatePoisonText);
         
         EventManager.Subscribe<int>(gameObject, EventID.SetAttack, UpdateAttackText);
+        
         EventManager.Subscribe<CombatTickerArgs>(gameObject, EventID.AttackTick, UpdateAttackBar);
+        EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowAttackBar);
+        EventManager.Subscribe(gameObject, EventID.ExitCombat, HideAttackBar);
+
         EventManager.Subscribe<CombatTickerArgs>(gameObject, EventID.AbilityTick, UpdateAbilityBar);
+        EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowAbilityBar);
+        EventManager.Subscribe(gameObject, EventID.ExitCombat, HideAbilityBar);
+    }
+
+    new void Start() {
+        base.Start();
+        manaCostText.text = mAnimal.animalData.manaCost.ToString();
+        hpText.text = mAnimal.animalData.hp.ToString();
+        attackText.text = mAnimal.animalData.atkDmg.ToString();
     }
     
     /*******************   Mana   *******************/
@@ -53,6 +68,12 @@ public class AnimalUI : CardUI {
         if (val == 0) armorText.gameObject.SetActive(false);
         else armorText.gameObject.SetActive(true);
     }
+    void UpdatePoisonText(int val) {
+        poisonText.text = val.ToString();
+        
+        if (val == 0) poisonText.gameObject.SetActive(false);
+        else poisonText.gameObject.SetActive(true);
+    }
     
     /*******************   Attack   *******************/
     
@@ -63,7 +84,12 @@ public class AnimalUI : CardUI {
     void UpdateAttackBar(CombatTickerArgs args) {
         attackBarFill.fillAmount = (float) args.curTick / args.endTick;
     }
+    void ShowAttackBar() { attackBarBack.gameObject.SetActive(true);}
+    void HideAttackBar() { attackBarBack.gameObject.SetActive(false);}
+    
     void UpdateAbilityBar(CombatTickerArgs args) {
         abilityBarFill.fillAmount = (float) args.curTick / args.endTick;
     }
+    void ShowAbilityBar() { abilityBarBack.gameObject.SetActive(true);}
+    void HideAbilityBar() { abilityBarBack.gameObject.SetActive(false);}
 }

@@ -8,6 +8,8 @@ public class Card : MonoBehaviour {
     public Sprite image;
 
     public Stack mStack;
+    
+    public CombatSlot mCombatSlot => (CombatSlot)mSlot;
     public Slot mSlot;
 
     public void Start() { Setup(cardData); }

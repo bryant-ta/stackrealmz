@@ -32,12 +32,12 @@ public interface IAttack {
 
 public class StandardAttack : IAttack {
     public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
-        List<Animal> targets = TargetTypes.GetTargets(targetType, originSlot);
+        List<CombatSlot> targets = TargetTypes.GetTargets(targetType, originSlot);
 
         // found targets, apply damage
         if (targets.Count > 0) {
-            foreach (Animal a in targets) {
-                a.health.Damage(dmg);
+            foreach (CombatSlot c in targets) {
+                c.Animal.health.Damage(dmg);
             }
             return true;
         }
@@ -60,13 +60,14 @@ public class NoneAttack : IAttack {
 
 public class BurnAttack : IAttack {
     public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
-        List<Animal> targets = TargetTypes.GetTargets(targetType, originSlot);
+        List<CombatSlot> targetSlots = TargetTypes.GetTargets(targetType, originSlot);
 
         // TODO: make library of effects and pull Burn effect, then modify dmg
-        if (targets.Count > 0) {
-            foreach (Animal a in targets) {
-                Effect e = new Effect("Burn", EffectType.DamageEffect, EffectPermanence.Duration, dmg, 2);
-                a.GetComponent<EffectController>().AddEffect(e);
+        if (targetSlots.Count > 0) {
+            foreach (CombatSlot c in targetSlots) {
+                Effect e = new Effect("Burn", EffectType.DamageEffect, EffectPermanence.Duration, dmg, 2, originSlot.Animal);
+                EffectOrder eo = new EffectOrder() {originSlot = originSlot, cardText = new CardText(e)};
+                c.Animal.EffectCtrl.AddEffect(e);
             }
             return true;
         }

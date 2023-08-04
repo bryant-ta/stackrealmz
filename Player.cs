@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,6 +10,7 @@ public class Player : MonoBehaviour {
 
     [SerializeField] LayerMask dragLayer;
     [SerializeField] LayerMask cardLayer;
+    [SerializeField] LayerMask slotLayer;
 
     IMoveable heldMoveable;
     Camera mainCamera;
@@ -26,20 +28,33 @@ public class Player : MonoBehaviour {
     public void OnPrimaryDown() {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
+        
+        // Click Cards
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
             if (hit.collider != null) {
+                // print(hit.collider.gameObject.name);
+
                 if (hit.collider.gameObject.TryGetComponent(out IMoveable moveable)) {
                     HoldMoveable(moveable);
                 }
+            }
+        }
+        
+        // Click Slots
+        if (Physics.Raycast(ray, out hit, 100.0f, slotLayer, QueryTriggerInteraction.Ignore)) {
+            if (hit.collider != null) {
+                // print(hit.collider.gameObject.name);
 
-                if (hit.collider.gameObject.TryGetComponent(out Card card)) {
-                    EventManager.Invoke(gameObject, EventID.PrimaryDown, card);
+                if (hit.collider.gameObject.TryGetComponent(out CombatSlot combatSlot)) {
+                    EventManager.Invoke(gameObject, EventID.PrimaryDown, combatSlot);
                 }
             }
         }
     }
 
     public void OnSecondaryDown() {
+        EventManager.Invoke(gameObject, EventID.SecondaryDown); // note: needs to be before hit.invoke for targeting cancel trigger
+
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100.0f, cardLayer, QueryTriggerInteraction.Ignore)) {
@@ -47,8 +62,6 @@ public class Player : MonoBehaviour {
                 EventManager.Invoke(hit.collider.gameObject, EventID.SecondaryDown);
             }
         }
-
-        EventManager.Invoke(gameObject, EventID.SecondaryDown);
     }
 
     public void OnTertiaryDown() {
@@ -68,49 +81,57 @@ public class Player : MonoBehaviour {
     ////////////////////////////////    Targeting    ///////////////////////////////
 
     void EnableTargetMode() {
-        EventManager.Subscribe<Card>(gameObject, EventID.PrimaryDown, TargetSelected);
+        EventManager.Subscribe<CombatSlot>(gameObject, EventID.PrimaryDown, TargetSelected);
         EventManager.Subscribe(gameObject, EventID.SecondaryDown, CancelSelectTarget);
     }
     void DisableTargetMode() {
-        EventManager.Unsubscribe<Card>(gameObject, EventID.PrimaryDown, TargetSelected);
+        EventManager.Unsubscribe<CombatSlot>(gameObject, EventID.PrimaryDown, TargetSelected);
         EventManager.Unsubscribe(gameObject, EventID.SecondaryDown, CancelSelectTarget);
     }
 
-    bool isSelectingTarget = true;
+    // SelectTargets runs selection loop for targeting cards (spells). Returns null if targeting is canceled.
     bool selectTargetCanceled = false;
-    CombatSlot selectedSlot = null;
-    public IEnumerator SelectTarget(Action<CombatSlot> selectSlot) {
-        isSelectingTarget = true;
+    CombatSlot selected = null;
+    public IEnumerator SelectTargets(TargetType targetType, int numTargets, Action<List<CombatSlot>> selectSlots,
+        Group targetGroup = Group.None) {
+        List<CombatSlot> targetSlots = new List<CombatSlot>();
         selectTargetCanceled = false;
 
         EnableTargetMode();
 
-        while (isSelectingTarget) {
-            // Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            // add visual effect of selecting here
+        while (targetSlots.Count != numTargets) {
             yield return null;
+            if (selectTargetCanceled) { // card select canceled
+                print("Spell canceled.");
+                selectSlots(null);
+                yield break;
+            }
+
+            if (selected != null) { // card selected
+                List<CombatSlot> a = TargetTypes.GetTargets(targetType, selected, targetGroup);
+                if (a.Count > 0) {
+                    if (targetSlots.Count == 0 && a[0].IsEmpty()) {
+                        selected = null;
+                        print("Select non-empty slot for first target");
+                        continue;
+                    }
+
+                    targetSlots.Add(a[0]);
+                } else {
+                    print("Invalid target.");
+                }
+            }
+
+            selected = null;
         }
 
         DisableTargetMode();
 
-        if (selectTargetCanceled) { // card select canceled
-            selectSlot(null);
-        } else { // card selected, return that card if its valid
-            selectSlot(selectedSlot);
-        }
+        selectSlots(targetSlots);
     }
 
-    void TargetSelected(Card c) {
-        isSelectingTarget = false;
-        if (c is Animal animal)
-            selectedSlot = animal.mSlot as CombatSlot;
-        else
-            print("Target selected is not an Animal");
-    }
-    void CancelSelectTarget() {
-        isSelectingTarget = false;
-        selectTargetCanceled = true;
-    }
+    void TargetSelected(CombatSlot c) { selected = c; }
+    void CancelSelectTarget() { selectTargetCanceled = true; }
 
     ////////////////////////////////    Holding Cards    ///////////////////////////////
 

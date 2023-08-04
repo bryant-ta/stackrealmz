@@ -4,6 +4,7 @@ public class Health : MonoBehaviour {
     public int hp;
     public int maxHp;
     public int armor;
+    public int poison;
 
     void Start() {
         if (TryGetComponent(out Animal a)) {
@@ -25,42 +26,39 @@ public class Health : MonoBehaviour {
     public void ModifyHp(int value) {
         int newHp = hp + value;
         if (newHp <= 0) {
-            hp = 0;
+            newHp = 0;
         } else if (newHp > maxHp) {
-            hp = maxHp;
-        } else {
-            hp = newHp;
+            newHp = maxHp;
         }
         
-        if (value < 0) EventManager.Invoke(gameObject, EventID.Damage, hp);
-        else if (value > 0) EventManager.Invoke(gameObject, EventID.Heal, hp);
+        if (value < 0) EventManager.Invoke(gameObject, EventID.Damage, newHp);
+        else if (value > 0) EventManager.Invoke(gameObject, EventID.Heal, newHp);
         
-        EventManager.Invoke(gameObject, EventID.SetHp, hp);
-        if (hp <= 0) EventManager.Invoke(gameObject, EventID.Death);
+        SetHp(newHp);
     }
 
     public void ModifyMaxHp(int value) {
         int newMaxHp = maxHp + value;
         if (newMaxHp < 1) {
-            maxHp = 1;
-            SetHp(1);
-        } else {
-            maxHp = newMaxHp;
-            ModifyHp(value);
+            newMaxHp = 1;
         }
         
-        EventManager.Invoke(gameObject, EventID.SetMaxHp, maxHp);
+        SetMaxHp(newMaxHp);
     }
-
+    
     public void SetHp(int value) {
         hp = value;
+        
         EventManager.Invoke(gameObject, EventID.SetHp, value);
-        if (hp <= 0) EventManager.Invoke(gameObject, EventID.Death);
+        if (hp <= 0) EventManager.Invoke(gameObject, EventID.Death);    // only invoke Death here
     }
     
     public void SetMaxHp(int value) {
         maxHp = value;
-        ModifyHp(value);
+        if (value > 0) {
+            ModifyHp(value);
+        }
+
         EventManager.Invoke(gameObject, EventID.SetMaxHp, value);
     }
     
@@ -74,5 +72,20 @@ public class Health : MonoBehaviour {
         }
         
         EventManager.Invoke(gameObject, EventID.SetArmor, armor);
+    }
+    
+    // Positive input raises poison. Negative input reduces poison.
+    public void ModifyPoison(int value) {
+        int newPoison = poison + value;
+        if (newPoison <= 0) {
+            poison = 0;
+        } else if (newPoison >= hp) {
+            poison = hp;
+            SetHp(0);
+        } else {
+            poison = newPoison;
+        }
+        
+        EventManager.Invoke(gameObject, EventID.SetPoison, poison);
     }
 }

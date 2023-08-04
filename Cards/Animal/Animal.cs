@@ -14,6 +14,7 @@ public class Animal : Card {
 
     public Attack attack;
     public CardText cardText;
+    public Group group;
 
     CombatTicker attackTicker;
     IAbility ability;
@@ -25,7 +26,11 @@ public class Animal : Card {
     public EffectController EffectCtrl => effectCtrl;
     EffectController effectCtrl;
 
-    new void Start() {
+    bool didStart = false;
+    public new void Start() {
+        if (didStart) return; // useful when need to manually call Start before other initialization code in same frame (e.g. StartCombatState)
+        didStart = true;
+        
         Setup(animalData);
         manaCost = new Stat(animalData.manaCost);
         atkDmg = new Stat(animalData.atkDmg);
@@ -33,9 +38,11 @@ public class Animal : Card {
         // ablCd = new Stat(animalData.ablCd);
         // ablPwr = new Stat(animalData.ablPwr);
 
-        cardText = animalData.cardText;
-        cardText.effect.effectFunc = EffectTypeLookUp.LookUp[cardText.effect.effectType];
-
+        cardText = new CardText(animalData.cardText);
+        cardText.effect.effectFunc = EffectTypeLookUp.CreateEffect(cardText.effect.effectType);
+        cardText.effect.source = this;
+        group = animalData.group;
+        
         attack = animalData.attack;
         attack.attackFunc = AttackTypeLookUp.LookUp[attack.attackType];
         
@@ -52,13 +59,40 @@ public class Animal : Card {
     }
 
     public void Play() {
-        EffectManager.Instance.RegisterEffectOrder(this, cardText.condition);
         EventManager.Invoke(gameObject, EventID.CardPlayed);
+    }
+
+    void TriggerCardText() {
+        if (cardText.effect.effectType == EffectType.None) return;
+        
+        EventManager.Invoke(gameObject, cardText.condition, new EffectOrder() {
+            originSlot = mCombatSlot,
+            cardText = cardText,
+        });
+    }
+    
+    public void StartCombatState() {
+        // TODO: ensure atkSpd/ablCd correctly updates tickers
+        isInCombat = true;
+        
+        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, speed.Value, false);
+        // abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
+
+        EffectManager.Instance.RegisterEffectOrder(this, cardText.condition);
+        EventManager.Invoke(gameObject, EventID.EnterCombat);
+    }
+    public void EndCombatState() {
+        isInCombat = false;
+        
+        attackTicker.Stop();
+        // abilityTicker.Stop();
+        
+        EventManager.Invoke(gameObject, EventID.ExitCombat);
     }
 
     void Attack() {
         int terrainModifier = 1;
-        CombatSlot curCombatSlot = mSlot as CombatSlot;
+        CombatSlot curCombatSlot = mCombatSlot;
         if (!curCombatSlot) {
             Debug.LogErrorFormat("Current slot of %s is not type CombatSlot. Attack failed.", name);
             return;
@@ -67,7 +101,7 @@ public class Animal : Card {
         // if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
         int dmg = atkDmg.Value * terrainModifier;
 
-        if (!attack.attackFunc.Attack(attack.targetType, mSlot as CombatSlot, dmg, isEnemy)) {
+        if (!attack.attackFunc.Attack(attack.targetType, mCombatSlot, dmg, isEnemy)) {
             attackTicker.Start();   // hit nothing
         } else {
             attackTicker.Reset();   // hit something, reset timer
@@ -75,20 +109,13 @@ public class Animal : Card {
         }
     }
 
-    void TriggerCardText() {
-        EventManager.Invoke(gameObject, cardText.condition, new EffectOrder() {
-            originSlot = mSlot as CombatSlot,
-            cardText = cardText,
-        });
-    }
-
-    void Step() {
-        CombatSlot curCombatSlot = mSlot as CombatSlot;
-        CombatSlot targetMoveSlot = curCombatSlot.SlotGrid.Forward(curCombatSlot, isEnemy) as CombatSlot;
-        if (targetMoveSlot) {
-            targetMoveSlot.PlaceAndMove(mStack);
-        }
-    }
+    // void Step() {
+    //     CombatSlot curCombatSlot = mCombatSlot;
+    //     CombatSlot targetMoveSlot = curCombatSlot.SlotGrid.Forward(curCombatSlot, isEnemy) as CombatSlot;
+    //     if (targetMoveSlot) {
+    //         targetMoveSlot.PlaceAndMove(mStack);
+    //     }
+    // }
 
     void Ability() {
         // if (isInCombat && mSlot && abilityTicker.Ready()) {
@@ -108,33 +135,16 @@ public class Animal : Card {
         yield return null;
 
         if (mSlot) {
-            mSlot.PickUp();
+            mSlot.PickUpHeld();
         }
-
         if (isEnemy) {
             EventManager.Invoke(WaveManager.Instance.gameObject, EventID.EnemyDied);
         }
-        
-        mStack.ExtractWithoutCraft(this);
-        Destroy(gameObject);
-    }
-    
-    public void StartCombatState() {
-        // TODO: ensure atkSpd/ablCd correctly updates tickers
-        isInCombat = true;
-        
-        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, speed.Value, false);
-        // abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
+        if (mStack) {
+            mStack.ExtractWithoutCraft(this);
+        }
 
-        EventManager.Invoke(gameObject, EventID.EnterCombat);
-    }
-    public void EndCombatState() {
-        isInCombat = false;
-        
-        attackTicker.Stop();
-        // abilityTicker.Stop();
-        
-        EventManager.Invoke(gameObject, EventID.ExitCombat);
+        Destroy(gameObject);
     }
 
     void OnEnable() {
@@ -149,7 +159,7 @@ public class Animal : Card {
     }
 
     IEnumerator RegisterAnimal() {
-        yield return null;      // required for isEnemy to be set during CardFactory.CreateAnimal()
+        yield return null;      // required for isEnemy to be set
         if (isEnemy) GameManager.Instance.enemies.Add(this);
         else GameManager.Instance.animals.Add(this);
     }

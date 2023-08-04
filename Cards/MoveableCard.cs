@@ -17,7 +17,7 @@ public class MoveableCard : MonoBehaviour, IMoveable {
     public Transform PickUp() {
         if (mCard.mStack.isLocked) return null;
         if (mCard.mSlot) {
-            if (!mCard.mSlot.PickUp(true)) {
+            if (!mCard.mSlot.PickUpHeld(true)) {
                 return null;    // failed to pickup from slot, such as when card is locked or not enough money to buy
             }
         }
@@ -87,12 +87,12 @@ public class MoveableCard : MonoBehaviour, IMoveable {
     }
 
     void OnTriggerEnter(Collider col) {
-        if (col.gameObject.layer == gameObject.layer && !nearestSnappableObjs.Contains(col.transform)) {
+        if ((col.gameObject.layer == gameObject.layer || col.gameObject.layer == LayerMask.NameToLayer("Slot")) && !nearestSnappableObjs.Contains(col.transform)) {
             nearestSnappableObjs.Add(col.transform);
         }
     }
     void OnTriggerExit(Collider col) {
-        if (col.gameObject.layer == gameObject.layer && nearestSnappableObjs.Contains(col.transform)) {
+        if ((col.gameObject.layer == gameObject.layer || col.gameObject.layer == LayerMask.NameToLayer("Slot")) && nearestSnappableObjs.Contains(col.transform)) {
             nearestSnappableObjs.Remove(col.transform);
         }
     }
