@@ -18,7 +18,6 @@ public enum EffectType {
     SummonEffect = 20, // executed in EffectManager
     SpikeyEffect = 21,
     PoisonEffect = 22,
-    AuraEffect = 23,
     PushEffect = 40,   // use with Standard TargetType
     PullEffect = 41,   // use with Far TargetType
     // SwapEffect = 42, // cant do yet, needs two combatslot args for swapping
@@ -42,7 +41,6 @@ public static class EffectTypeLookUp
         { EffectType.SummonEffect, () => null },
         { EffectType.SpikeyEffect, () => new SpikeyEffect() },
         { EffectType.PoisonEffect, () => new PoisonEffect() },
-        { EffectType.AuraEffect, () => new AuraEffect() },
         { EffectType.PushEffect, () => new PushEffect() },
         { EffectType.PullEffect, () => new PullEffect() },
     };
@@ -99,6 +97,7 @@ public class ModifyManaEffect : IEffect {
 
     public void Remove(CombatSlot target) {
         target.Animal.manaCost.ChangeModifier(-modifierTotal);
+        modifierTotal = 0;
         EventManager.Invoke(target.Animal.gameObject, EventID.SetManaCost, target.Animal.manaCost.Value);
     }
 }
@@ -113,6 +112,7 @@ public class ModifyBaseManaEffect : IEffect {
 
     public void Remove(CombatSlot target) {
         target.Animal.manaCost.ChangeBaseValue(-modifierTotal);
+        modifierTotal = 0;
         EventManager.Invoke(target.Animal.gameObject, EventID.SetManaCost, target.Animal.manaCost.Value);
     }
 }
@@ -127,6 +127,7 @@ public class ModifyAttackEffect : IEffect {
 
     public void Remove(CombatSlot target) {
         target.Animal.atkDmg.ChangeModifier(-modifierTotal);
+        modifierTotal = 0;
         EventManager.Invoke(target.Animal.gameObject, EventID.SetAttack, target.Animal.atkDmg.Value);
     }
 }
@@ -156,6 +157,7 @@ public class ModifySpeedEffect : IEffect {
 
     public void Remove(CombatSlot target) {
         target.Animal.speed.ChangeModifier(-modifierTotal);
+        modifierTotal = 0;
         EventManager.Invoke(target.Animal.gameObject, EventID.SetSpeed, target.Animal.speed.Value);
     }
 }
@@ -170,6 +172,7 @@ public class ModifyBaseSpeedEffect : IEffect {
 
     public void Remove(CombatSlot target) {
         target.Animal.speed.ChangeBaseValue(-modifierTotal);
+        modifierTotal = 0;
         EventManager.Invoke(target.Animal.gameObject, EventID.SetSpeed, target.Animal.speed.Value);
     }
 }
@@ -207,18 +210,6 @@ public class PoisonEffect : IEffect {
 
     public void Remove(CombatSlot target) {
         target.Animal.health.ModifyPoison(-target.Animal.health.poison);
-    }
-}
-
-public class AuraEffect : IEffect {
-    public void Apply(CombatSlot target, EffectArgs args) {
-        // add actual aura effect to aura aoe targets
-        // record targets affected
-        // subscribe to movement event to trigger remove and reapply at new slot location
-    }
-
-    public void Remove(CombatSlot target) {
-        // call effect.remove on affected targets
     }
 }
 

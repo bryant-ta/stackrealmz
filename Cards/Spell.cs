@@ -37,11 +37,13 @@ public class Spell : Card {
 
         // Select spell targets
         print("Spell " + spellData.name + "ready! Select " + cardText.numTargetTimes + " targets.");
-        yield return StartCoroutine(Player.Instance.SelectTargets(
-            cardText.targetType, 
-            cardText.numTargetTimes,
-            (ret) => { targetSlots = ret; }, 
-            cardText.targetGroup));
+        yield return StartCoroutine(Player.Instance.SelectTargets(new TargetArgs() {
+            targetType =  cardText.targetArgs.targetType,
+            originSlot = null,
+            targetSlotState = cardText.targetArgs.targetSlotState,
+            targetSameTeam = cardText.targetArgs.targetSameTeam,
+            targetGroup =  cardText.targetArgs.targetGroup,
+        }, cardText.numTargetTimes, (ret) => { targetSlots = ret; }));
         
         // Target select canceled, abort
         if (targetSlots == null) {

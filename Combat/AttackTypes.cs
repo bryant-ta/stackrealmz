@@ -32,7 +32,11 @@ public interface IAttack {
 
 public class StandardAttack : IAttack {
     public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
-        List<CombatSlot> targets = TargetTypes.GetTargets(targetType, originSlot);
+        List<CombatSlot> targets = TargetTypes.GetTargets(new TargetArgs() {
+            targetType = targetType,
+            originSlot = originSlot,
+            targetSlotState = TargetSlotState.NonEmpty,
+        });
 
         // found targets, apply damage
         if (targets.Count > 0) {
@@ -43,7 +47,7 @@ public class StandardAttack : IAttack {
         }
         
         // nothing in row to hit, enemy can hit player
-        if (enemyCalled) {
+        if (originSlot.Animal.isEnemy) {
             GameManager.Instance.playerLife.ModifyHp(-dmg);
             return true;
         }
@@ -60,7 +64,11 @@ public class NoneAttack : IAttack {
 
 public class BurnAttack : IAttack {
     public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
-        List<CombatSlot> targetSlots = TargetTypes.GetTargets(targetType, originSlot);
+        List<CombatSlot> targetSlots = TargetTypes.GetTargets(new TargetArgs() {
+            targetType = targetType,
+            originSlot = originSlot,
+            targetSlotState = TargetSlotState.NonEmpty,
+        });
 
         // TODO: make library of effects and pull Burn effect, then modify dmg
         if (targetSlots.Count > 0) {

@@ -23,26 +23,20 @@ public class EffectManager : MonoBehaviour {
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableTriggerEffects);
     }
 
-    void Update() {
-        TriggerEffectOrders();
-    }
+    void Update() { TriggerEffectOrders(); }
 
     /****************   Effect Order Management   ****************/
-    
+
     public void RegisterEffectOrder(Animal origin, EventID condition) {
         EventManager.Subscribe<EffectOrder>(origin.gameObject, condition, AddEffectOrder);
     }
 
-    public void AddEffectOrder(EffectOrder effectOrder) {
-        effectOrders.Add(effectOrder);
-    }
-    
+    public void AddEffectOrder(EffectOrder effectOrder) { effectOrders.Add(effectOrder); }
+
     // TODO: Move executeDurationEffects loop to here to do them in priority order
     // TODO: sort based on origin location or assigned effect priority for consistent effect resolution
-    void SortEffectOrders() {
-        
-    }
-    
+    void SortEffectOrders() { }
+
     /****************   Effect Execution   ****************/
 
     void EnableTriggerEffects() {
@@ -54,24 +48,29 @@ public class EffectManager : MonoBehaviour {
         CombatClock.onTick.RemoveListener(ExecuteDurationEffects);
         effectOrders.Clear();
     }
-    
+
     void TriggerEffectOrders() {
         foreach (EffectOrder eo in effectOrders) {
             List<CombatSlot> targetSlots = new List<CombatSlot>();
             for (int i = 0; i < eo.cardText.numTargetTimes; i++) {
-                List<CombatSlot> t = TargetTypes.GetTargets(eo.cardText.targetType, eo.originSlot, eo.cardText.targetGroup);
+                List<CombatSlot> t = TargetTypes.GetTargets(new TargetArgs() {
+                    targetType = eo.cardText.targetArgs.targetType,
+                    originSlot = eo.originSlot,
+                    targetSlotState = eo.cardText.targetArgs.targetSlotState,
+                    targetSameTeam = eo.cardText.targetArgs.targetSameTeam,
+                    targetGroup = eo.cardText.targetArgs.targetGroup
+                });
                 if (t == null || t.Count == 0) continue;
 
                 targetSlots = targetSlots.Concat(t).ToList();
             }
 
             // Effect Execution
-            
+
             Effect e = eo.cardText.effect;
             Animal effectOrigin = eo.originSlot.Animal;
             if (e.effectType == EffectType.SummonEffect) {
-                // add empty adjacent slots as backup spawn slots
-                targetSlots = targetSlots.Concat(TargetTypes.GetTargets(TargetType.EmptyAdjacent, eo.originSlot)).ToList();
+                // ? add empty adjacent slots as backup spawn slots
                 ExecuteSummonEffect(eo.cardText.effect, targetSlots);
             } else if (e.effectPermanence == EffectPermanence.Aura) {
                 effectOrigin.EffectCtrl.AddAuraEffect(e);
@@ -85,7 +84,7 @@ public class EffectManager : MonoBehaviour {
                 }
             }
         }
-        
+
         effectOrders.Clear();
     }
 
@@ -96,20 +95,20 @@ public class EffectManager : MonoBehaviour {
             for (int y = combatGrid.Height - 1; y >= 0; y--) {
                 CombatSlot c = combatGrid.SelectSlot(new Vector2Int(x, y), false) as CombatSlot;
                 if (!c || c.IsEmpty()) continue;
-                
+
                 foreach (Effect e in c.Animal.EffectCtrl.durationEffects.ToList()) {
                     print(e.name + " " + e.remainingDuration);
-                    e.effectFunc.Apply(c.Animal.mSlot as CombatSlot, new EffectArgs() { val = e.baseValue });
+                    e.effectFunc.Apply(c.Animal.mSlot as CombatSlot, new EffectArgs() {val = e.baseValue});
                     e.remainingDuration--;
 
                     if (e.remainingDuration == 0) {
-                        c.Animal.EffectCtrl. RemoveEffect(e);
+                        c.Animal.EffectCtrl.RemoveEffect(e);
                     }
                 }
             }
         }
     }
-    
+
     // ExecuteSummonEffects handles spawning new cards in combat from summon effects.
     // - Spawn location is determined by TargetType
     // - Prioritizes spawn slots based on list order

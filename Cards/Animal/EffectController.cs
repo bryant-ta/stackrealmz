@@ -28,7 +28,13 @@ public class EffectController : MonoBehaviour {
         Effect auraRealEffect = new Effect(auraEffect.name, auraEffect.effectType, EffectPermanence.Permanent, auraEffect.baseValue, 0, auraEffect.source);
         
         auraTargets.Clear();
-        auraTargets = TargetTypes.GetTargets(mAnimal.cardText.auraTargetType, mAnimal.mCombatSlot, mAnimal.cardText.targetGroup);
+        auraTargets = TargetTypes.GetTargets(new TargetArgs() {
+            targetType = mAnimal.cardText.targetArgs.targetType,
+            originSlot = mAnimal.mCombatSlot,
+            targetSlotState = TargetSlotState.Any,
+            targetSameTeam = true,
+            targetGroup = mAnimal.cardText.targetArgs.targetGroup
+        });
         
         foreach (CombatSlot auraTargetSlot in auraTargets) {
             auraTargetSlot.AddActiveAuraEffect(auraRealEffect);

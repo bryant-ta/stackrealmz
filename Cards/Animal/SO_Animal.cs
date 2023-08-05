@@ -37,21 +37,23 @@ public struct Attack {
 
 [Serializable]
 public class CardText {
+    public string text;
     public EventID condition;
     public Effect effect;
-    public TargetType targetType;
-    public TargetType auraTargetType;
+    public TargetArgs targetArgs;
     public int numTargetTimes = 1;          // used for Random, Spells
-    public Group targetGroup;       // optional
-    public string text;
 
     public CardText(CardText cardText) {
         condition = cardText.condition;
         effect = new Effect(cardText.effect);
-        targetType = cardText.targetType;
-        auraTargetType = cardText.auraTargetType;
+        
+        targetArgs.targetType = cardText.targetArgs.targetType;
+        targetArgs.originSlot = cardText.targetArgs.originSlot;
+        targetArgs.targetSlotState = cardText.targetArgs.targetSlotState;
+        targetArgs.targetSameTeam = cardText.targetArgs.targetSameTeam;
+        targetArgs.targetGroup = cardText.targetArgs.targetGroup;
+        
         numTargetTimes = cardText.numTargetTimes;
-        targetGroup = cardText.targetGroup;
         text = cardText.text;
     }
     

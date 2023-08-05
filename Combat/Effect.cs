@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 [Serializable]      // NEED THIS
 public class Effect {
@@ -9,7 +10,7 @@ public class Effect {
     
     public int baseValue;
     public int remainingDuration;
-    public Card source;
+    [HideInInspector] public Card source;
     
     public SO_Card summonData;
     
