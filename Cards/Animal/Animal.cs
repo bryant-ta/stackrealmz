@@ -7,7 +7,7 @@ public class Animal : Card {
 
     public Health health;
     public Stat manaCost;
-    public Stat atkDmg;
+    public Stat atk;
     public Stat speed;
     // public Stat ablPwr;
     // ublic Stat ablCd;
@@ -33,7 +33,7 @@ public class Animal : Card {
         
         Setup(animalData);
         manaCost = new Stat(animalData.manaCost);
-        atkDmg = new Stat(animalData.atkDmg);
+        atk = new Stat(animalData.atkDmg);
         speed = new Stat(animalData.speed);
         // ablCd = new Stat(animalData.ablCd);
         // ablPwr = new Stat(animalData.ablPwr);
@@ -94,18 +94,20 @@ public class Animal : Card {
         int terrainModifier = 1;
         CombatSlot curCombatSlot = mCombatSlot;
         if (!curCombatSlot) {
-            Debug.LogErrorFormat("Current slot of %s is not type CombatSlot. Attack failed.", name);
+            Debug.LogErrorFormat("Current slot {0} is not type CombatSlot. Attack failed.", name);
             return;
         }
 
         // if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
-        int dmg = atkDmg.Value * terrainModifier;
+        int dmg = atk.Value * terrainModifier;
 
-        if (!attack.attackFunc.Attack(attack.targetType, mCombatSlot, dmg, isEnemy)) {
+        if (!attack.attackFunc.Attack(attack.targetType, mCombatSlot, dmg)) {
             attackTicker.Start();   // hit nothing
         } else {
             attackTicker.Reset();   // hit something, reset timer
             attackTicker.Start();
+            
+            EventManager.Invoke(gameObject, EventID.Attack);
         }
     }
 

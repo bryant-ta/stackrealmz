@@ -1,27 +1,26 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public enum TargetType {
-    Standard                = 0, // first in enemy row
-    Self                    = 1,
-    Forward                 = 2,
-    Backward                = 3,
-    Above                   = 4,
-    Below                   = 5,
-    Adjacent                = 6,
-    Corners                 = 7,
-    Stacked                 = 8, // above + below origin
-    Team                    = 10, // all cards of a team
-    Random                  = 30,
-    RandomAdjacent          = 31,
-    Select                  = 40, // selection, only used by player (Spells)
-    FrontThree              = 50,
-    Sweep                   = 51, // Standard + above target + below target
-    AllInRow                = 52,
-    AllInEnemyRow           = 53,
-    Far                     = 60, // enemy in last column
+    Standard       = 0, // first in enemy row
+    Self           = 1,
+    Forward        = 2,
+    Backward       = 3,
+    Above          = 4,
+    Below          = 5,
+    Adjacent       = 6,
+    Corners        = 7,
+    Stacked        = 8,  // above + below origin
+    Team           = 10, // all cards of a team
+    Random         = 30,
+    RandomAdjacent = 31,
+    Select         = 40, // selection, only used by player (Spells)
+    FrontThree     = 50,
+    Sweep          = 51, // Standard + above target + below target
+    AllInRow       = 52,
+    AllInEnemyRow  = 53,
+    Far            = 60, // enemy in last column
 }
 
 [Serializable]
@@ -30,7 +29,8 @@ public struct TargetArgs {
     [HideInInspector] public CombatSlot originSlot;
     public TargetSlotState targetSlotState;
     public bool targetSameTeam;
-    public Group targetGroup; // not used for most target types
+    public Group targetGroup;  // not used for most target types
+    public int numTargetTimes; // used for Random, Spells
 }
 
 public enum TargetSlotState {
@@ -67,23 +67,23 @@ public static class TargetTypes {
                 return targets;
             case TargetType.Standard:
                 targetSlot = SelectStandard(combatGrid, args.originSlot);
-                if (targetSlot) targets.Add(targetSlot);
+                if (targetSlot && targetSlot.Animal.EffectCtrl.FindEffect(EffectType.Hidden) == null) targets.Add(targetSlot);
                 return targets;
             case TargetType.Forward:
                 targetSlot = combatGrid.SelectSlotRelative(args.originSlot, enemyCalled, new Vector2Int(1, 0)) as CombatSlot;
-                if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(args.originSlot, targetSlot, true)) targets.Add(targetSlot);
+                if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 return targets;
             case TargetType.Backward:
                 targetSlot = combatGrid.SelectSlotRelative(args.originSlot, enemyCalled, new Vector2Int(-1, 0)) as CombatSlot;
-                if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(args.originSlot, targetSlot, true)) targets.Add(targetSlot);
+                if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 return targets;
             case TargetType.Above:
                 targetSlot = combatGrid.SelectSlotRelative(args.originSlot, enemyCalled, new Vector2Int(0, 1)) as CombatSlot;
-                if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(args.originSlot, targetSlot, true)) targets.Add(targetSlot);
+                if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 return targets;
             case TargetType.Below:
                 targetSlot = combatGrid.SelectSlotRelative(args.originSlot, enemyCalled, new Vector2Int(0, -1)) as CombatSlot;
-                if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(args.originSlot, targetSlot, true)) targets.Add(targetSlot);
+                if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 return targets;
             case TargetType.Adjacent:
                 return SelectTargetsAdjacent(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny);
@@ -91,9 +91,9 @@ public static class TargetTypes {
                 return SelectTargetsCorner(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny);
             case TargetType.Stacked:
                 targetSlot = combatGrid.SelectSlotRelative(args.originSlot, enemyCalled, new Vector2Int(0, 1)) as CombatSlot;
-                if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(args.originSlot, targetSlot, true)) targets.Add(targetSlot);
+                if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 targetSlot = combatGrid.SelectSlotRelative(args.originSlot, enemyCalled, new Vector2Int(0, -1)) as CombatSlot;
-                if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(args.originSlot, targetSlot, true)) targets.Add(targetSlot);
+                if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 return targets;
             case TargetType.Team: {
                 return SelectTargetsOfTeam(combatGrid, args.originSlot, args.targetSameTeam, args.targetGroup);
@@ -172,34 +172,39 @@ public static class TargetTypes {
         return targets;
     }
 
-    static List<CombatSlot> SelectTargetsAdjacent(SlotGrid combatGrid, CombatSlot origin, bool targetSameTeam, bool targetEmpty, bool targetAny) {
+    static List<CombatSlot> SelectTargetsAdjacent(SlotGrid combatGrid, CombatSlot originSlot, bool targetSameTeam, bool targetEmpty, bool targetAny) {
         List<CombatSlot> targets = new List<CombatSlot>();
         CombatSlot targetSlot;
 
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(1, 0)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, targetSameTeam)) targets.Add(targetSlot);
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(-1, 0)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, targetSameTeam)) targets.Add(targetSlot);
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(0, 1)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, targetSameTeam)) targets.Add(targetSlot);
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(0, -1)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(1, 0)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(-1, 0)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(0, 1)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(0, -1)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
         return targets;
     }
 
-    static List<CombatSlot> SelectTargetsCorner(SlotGrid combatGrid, CombatSlot origin, bool targetSameTeam, bool targetEmpty, bool targetAny) {
+    static List<CombatSlot> SelectTargetsCorner(SlotGrid combatGrid, CombatSlot originSlot, bool targetSameTeam, bool targetEmpty, bool targetAny) {
         List<CombatSlot> targets = new List<CombatSlot>();
         CombatSlot targetSlot;
         
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(1, 1)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, true)) targets.Add(targetSlot);
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(-1, 1)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, true)) targets.Add(targetSlot);
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(1, -1)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, true)) targets.Add(targetSlot);
-        targetSlot = combatGrid.SelectSlotRelative(origin, origin.Animal.isEnemy, new Vector2Int(-1, -1)) as CombatSlot;
-        if (targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) && CheckTeam(origin, targetSlot, true)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(1, 1)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(-1, 1)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(1, -1)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
+        targetSlot = combatGrid.SelectSlotRelative(originSlot, originSlot.Animal.isEnemy, new Vector2Int(-1, -1)) as CombatSlot;
+        if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam)) targets.Add(targetSlot);
         return targets;
+    }
+
+    static bool CheckTargetArgs(CombatSlot targetSlot, CombatSlot originSlot, bool targetEmpty, bool targetAny, bool targetSameTeam) {
+        return targetSlot && (targetAny || (targetEmpty ? targetSlot.IsEmpty() : !targetSlot.IsEmpty())) &&
+               CheckTeam(originSlot, targetSlot, targetSameTeam);
     }
 
     // CheckTeam returns true if Animal inputs are on same (or opposite w/ !sameTeam) teams. Safely takes empty CombatSlots.

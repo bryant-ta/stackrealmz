@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class EffectManager : MonoBehaviour {
-    public static EffectManager Instance => _instance;
-    static EffectManager _instance;
+public class ExecutionManager : MonoBehaviour {
+    public static ExecutionManager Instance => _instance;
+    static ExecutionManager _instance;
+
+    public Transform returnPoint;
 
     [SerializeField] SlotGrid combatGrid;
     List<EffectOrder> effectOrders = new List<EffectOrder>();
@@ -23,7 +25,17 @@ public class EffectManager : MonoBehaviour {
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableTriggerEffects);
     }
 
-    void Update() { TriggerEffectOrders(); }
+    float timer = 0;
+    void Update() {
+        
+        if (timer >= 2) {
+            print("r");
+            timer = 0;
+            TriggerEffectOrders(); 
+        }
+
+        timer +=  Time.deltaTime;
+    }
 
     /****************   Effect Order Management   ****************/
 
@@ -52,13 +64,14 @@ public class EffectManager : MonoBehaviour {
     void TriggerEffectOrders() {
         foreach (EffectOrder eo in effectOrders) {
             List<CombatSlot> targetSlots = new List<CombatSlot>();
-            for (int i = 0; i < eo.cardText.numTargetTimes; i++) {
+            for (int i = 0; i < eo.cardText.targetArgs.numTargetTimes; i++) {
                 List<CombatSlot> t = TargetTypes.GetTargets(new TargetArgs() {
                     targetType = eo.cardText.targetArgs.targetType,
                     originSlot = eo.originSlot,
                     targetSlotState = eo.cardText.targetArgs.targetSlotState,
                     targetSameTeam = eo.cardText.targetArgs.targetSameTeam,
-                    targetGroup = eo.cardText.targetArgs.targetGroup
+                    targetGroup = eo.cardText.targetArgs.targetGroup,
+                    numTargetTimes = eo.cardText.targetArgs.numTargetTimes,
                 });
                 if (t == null || t.Count == 0) continue;
 
@@ -69,9 +82,10 @@ public class EffectManager : MonoBehaviour {
 
             Effect e = eo.cardText.effect;
             Animal effectOrigin = eo.originSlot.Animal;
-            if (e.effectType == EffectType.SummonEffect) {
-                // ? add empty adjacent slots as backup spawn slots
+            if (e.effectType == EffectType.Summon) {
                 ExecuteSummonEffect(eo.cardText.effect, targetSlots);
+            } else if (e.effectType == EffectType.Return) {
+                ExecuteReturnEffect(targetSlots);
             } else if (e.effectPermanence == EffectPermanence.Aura) {
                 effectOrigin.EffectCtrl.AddAuraEffect(e);
             } else {
@@ -99,17 +113,16 @@ public class EffectManager : MonoBehaviour {
                 foreach (Effect e in c.Animal.EffectCtrl.durationEffects.ToList()) {
                     print(e.name + " " + e.remainingDuration);
                     e.effectFunc.Apply(c.Animal.mSlot as CombatSlot, new EffectArgs() {val = e.baseValue});
-                    e.remainingDuration--;
+                    
+                    if (e.remainingDuration > 0) e.remainingDuration--;
 
-                    if (e.remainingDuration == 0) {
-                        c.Animal.EffectCtrl.RemoveEffect(e);
-                    }
+                    if (e.remainingDuration == 0) c.Animal.EffectCtrl.RemoveEffect(e);
                 }
             }
         }
     }
 
-    // ExecuteSummonEffects handles spawning new cards in combat from summon effects.
+    // ExecuteSummonEffect handles spawning new cards in combat from summon effects.
     // - Spawn location is determined by TargetType
     // - Prioritizes spawn slots based on list order
     // - If there are no more valid spawn slots, then chooses a random adjacent empty slot. If there is none, nothing will be spawned.
@@ -119,6 +132,42 @@ public class EffectManager : MonoBehaviour {
             if (!s) {
                 Debug.LogError("ExecuteSummonEffect: tried spawning in non-empty slot");
             }
+        }
+    }
+    
+    // ExecuteReturnEffect handles removing cards from combat.
+    public void ExecuteReturnEffect(List<CombatSlot> targetSlots) {
+        // Gather all player animals on combat grid into one stack
+        Stack gatheredStack = null;
+        bool first = true;
+        foreach (CombatSlot combatSlot in targetSlots) {
+            Animal animal = combatSlot.Animal;
+            if (animal) {
+                if (GameManager.Instance.animals.Contains(animal)) {
+                    Transform stackTransform = combatSlot.PickUpHeld(false, true);
+                    
+                    if (animal.EffectCtrl.FindEffect(EffectType.Vanish) != null) {
+                        Destroy(stackTransform.gameObject);
+                        continue;
+                    }
+                    
+                    if (first) {
+                        first = false;
+                        gatheredStack = animal.mStack;
+                        continue;
+                    }
+
+                    animal.mStack.PlaceAll(gatheredStack);
+                    StartCoroutine(Utils.MoveCardToPoint(animal, gatheredStack.CalculateStackPosition(animal)));
+                } else {
+                    Transform stackTransform = combatSlot.PickUpHeld(false, true);
+                    Destroy(stackTransform.gameObject);
+                }
+            }
+        }
+
+        if (gatheredStack) {
+            StartCoroutine(Utils.MoveStackToPoint(gatheredStack, returnPoint.position));
         }
     }
 }

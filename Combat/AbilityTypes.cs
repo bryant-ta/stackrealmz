@@ -37,17 +37,17 @@ public class GainHpAbility : IAbility {
 
 public class ModifyAttackAbility : IAbility {
     public void Use(Slot originSlot, int val, bool flip) {
-        Effect e = new Effect("ModifyAttack", EffectType.ModifyAttackEffect, EffectPermanence.Permanent, val, 10);
+        Effect e = new Effect("ModifyAttack", EffectType.ModifyAttack, EffectPermanence.Temporary, val, 10);
         
-        originSlot.Card.GetComponent<EffectController>().AddDurationEffect(e);
+        originSlot.Card.GetComponent<EffectController>().AddEffect(e);
     }
 }
 
 public class PoisonAbility : IAbility {
     public void Use(Slot originSlot, int val, bool flip) {
         Slot targetSlot = originSlot.SlotGrid.Forward(originSlot, flip);
-        Effect e = new Effect("Poison", EffectType.DamageEffect, EffectPermanence.Duration, val, 3);
+        Effect e = new Effect("Poison", EffectType.Damage, EffectPermanence.Duration, val, 3);
         
-        targetSlot.Card.GetComponent<EffectController>().AddDurationEffect(e);
+        targetSlot.Card.GetComponent<EffectController>().AddEffect(e);
     }
 }

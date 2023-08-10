@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -38,12 +40,14 @@ public struct Attack {
 [Serializable]
 public class CardText {
     public string text;
+    // public List<Keyword> keywords = new List<Keyword>();
     public EventID condition;
     public Effect effect;
     public TargetArgs targetArgs;
-    public int numTargetTimes = 1;          // used for Random, Spells
 
     public CardText(CardText cardText) {
+        // keywords = cardText.keywords.ToList();
+        
         condition = cardText.condition;
         effect = new Effect(cardText.effect);
         
@@ -52,10 +56,10 @@ public class CardText {
         targetArgs.targetSlotState = cardText.targetArgs.targetSlotState;
         targetArgs.targetSameTeam = cardText.targetArgs.targetSameTeam;
         targetArgs.targetGroup = cardText.targetArgs.targetGroup;
+        targetArgs.numTargetTimes = cardText.targetArgs.numTargetTimes;
         
-        numTargetTimes = cardText.numTargetTimes;
         text = cardText.text;
     }
     
-    public CardText(Effect effect) { this.effect = effect; }
+    public CardText(Effect effect) { this.effect = new Effect(effect); }
 }

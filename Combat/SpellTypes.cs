@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.Interactions;
 
 public enum SpellType {
     None = 0,
@@ -32,7 +33,7 @@ public class EffectSpell : ISpell {
                 originSlot = slot,
                 cardText = cardText,
             };
-            EffectManager.Instance.AddEffectOrder(eo);
+            ExecutionManager.Instance.AddEffectOrder(eo);
         }
     }
 }

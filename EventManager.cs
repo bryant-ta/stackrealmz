@@ -38,8 +38,9 @@ public enum EventID {
     EnemyDied = 211,
     AttackReady = 220,      // Attack
     AttackTick = 221,
-    SetAttack = 222,
-    SetSpeed = 223,
+    Attack = 222,
+    SetAttack = 223,
+    SetSpeed = 224,
     AbilityReady = 230,     // Ability
     AbilityTick = 231,
     SetManaCost = 240,      // Mana

@@ -92,13 +92,13 @@ public class Player : MonoBehaviour {
     // SelectTargets runs selection loop for targeting cards (spells). Returns null if targeting is canceled.
     bool selectTargetCanceled = false;
     CombatSlot selected = null;
-    public IEnumerator SelectTargets(TargetArgs args, int numTargets, Action<List<CombatSlot>> selectSlots) {
+    public IEnumerator SelectTargets(TargetArgs args, Action<List<CombatSlot>> selectSlots) {
         List<CombatSlot> targetSlots = new List<CombatSlot>();
         selectTargetCanceled = false;
 
         EnableTargetMode();
 
-        while (targetSlots.Count != numTargets) {
+        while (targetSlots.Count != args.numTargetTimes) {
             yield return null;
             if (selectTargetCanceled) { // card select canceled
                 print("Spell canceled.");

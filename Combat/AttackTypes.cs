@@ -13,6 +13,9 @@ public enum AttackType {
     Standard,
     None,
     Burn,
+    Hidden,
+    Sunder,
+    Piercing,
 }
 
 public static class AttackTypeLookUp {
@@ -20,6 +23,9 @@ public static class AttackTypeLookUp {
         {AttackType.Standard, new StandardAttack()},
         {AttackType.None, new NoneAttack()},
         {AttackType.Burn, new BurnAttack()},
+        {AttackType.Hidden, new HiddenAttack()},
+        {AttackType.Sunder, new SunderAttack()},
+        {AttackType.Piercing, new PiercingAttack()},
     };
 }
 
@@ -27,22 +33,23 @@ public static class AttackTypeLookUp {
 
 public interface IAttack {
     // Attack returns true if Attack found valid targets (false if hit no targets, such as at field boundaries)
-    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled = false);
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg);
 }
 
 public class StandardAttack : IAttack {
-    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
         List<CombatSlot> targets = TargetTypes.GetTargets(new TargetArgs() {
             targetType = targetType,
             originSlot = originSlot,
             targetSlotState = TargetSlotState.NonEmpty,
+            numTargetTimes = 1,
         });
 
         // found targets, apply damage
+        foreach (CombatSlot c in targets) {
+            c.Animal.health.Damage(dmg);
+        }
         if (targets.Count > 0) {
-            foreach (CombatSlot c in targets) {
-                c.Animal.health.Damage(dmg);
-            }
             return true;
         }
         
@@ -57,23 +64,25 @@ public class StandardAttack : IAttack {
 }
 
 public class NoneAttack : IAttack {
-    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
         return true;
     }
 }
 
 public class BurnAttack : IAttack {
-    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg, bool enemyCalled) {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
         List<CombatSlot> targetSlots = TargetTypes.GetTargets(new TargetArgs() {
             targetType = targetType,
             originSlot = originSlot,
             targetSlotState = TargetSlotState.NonEmpty,
+            numTargetTimes = 1,
         });
 
-        // TODO: make library of effects and pull Burn effect, then modify dmg
         if (targetSlots.Count > 0) {
             foreach (CombatSlot c in targetSlots) {
-                Effect e = new Effect("Burn", EffectType.DamageEffect, EffectPermanence.Duration, dmg, 2, originSlot.Animal);
+                Effect e = EffectPresetLookup.effectPresets["Burn"];
+                e.source = originSlot.Animal;
+                e.baseValue = dmg;
                 EffectOrder eo = new EffectOrder() {originSlot = originSlot, cardText = new CardText(e)};
                 c.Animal.EffectCtrl.AddEffect(e);
             }
@@ -82,6 +91,86 @@ public class BurnAttack : IAttack {
 
         // cannot burn player
 
+        return false;
+    }
+}
+
+public class HiddenAttack : IAttack {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
+        if (originSlot.Animal.EffectCtrl.FindEffect(EffectType.Hidden) != null) {
+            AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
+        }
+        
+        AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
+        
+        return false;
+    }
+}
+
+public class SunderAttack : IAttack {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
+        List<CombatSlot> targets = TargetTypes.GetTargets(new TargetArgs() {
+            targetType = targetType,
+            originSlot = originSlot,
+            targetSlotState = TargetSlotState.NonEmpty,
+            numTargetTimes = 1,
+        });
+
+        // found targets, apply damage through armor
+        foreach (CombatSlot c in targets) {
+            c.Animal.health.ModifyHp(-dmg);
+        }
+        if (targets.Count > 0) {
+            return true;
+        }
+        
+        // nothing in row to hit, enemy can hit player
+        if (originSlot.Animal.isEnemy) {
+            GameManager.Instance.playerLife.ModifyHp(-dmg);
+            return true;
+        }
+        
+        return false;
+    }
+}
+
+public class PiercingAttack : IAttack {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
+        List<CombatSlot> targets = TargetTypes.GetTargets(new TargetArgs() {
+            targetType = targetType,
+            originSlot = originSlot,
+            targetSlotState = TargetSlotState.NonEmpty,
+            numTargetTimes = 1,
+        });
+
+        // found targets, apply damage
+        foreach (CombatSlot c in targets) {
+            int realDmg = c.Animal.health.Damage(dmg); // returns as negative if damage was dealt
+
+            if (-realDmg < dmg && realDmg != 0) {
+                List<CombatSlot> targetBehind = TargetTypes.GetTargets(new TargetArgs() {
+                    targetType = TargetType.Backward,
+                    originSlot = c,
+                    targetSlotState = TargetSlotState.NonEmpty,
+                    targetSameTeam = true,
+                    numTargetTimes = 1,
+                });
+
+                if (targetBehind.Count > 0) {
+                    targetBehind[0].Animal.health.Damage(dmg - (-realDmg));
+                }
+            }
+        }
+        if (targets.Count > 0) {
+            return true;
+        }
+        
+        // nothing in row to hit, enemy can hit player
+        if (originSlot.Animal.isEnemy) {
+            GameManager.Instance.playerLife.ModifyHp(-dmg);
+            return true;
+        }
+        
         return false;
     }
 }

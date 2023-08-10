@@ -36,14 +36,15 @@ public class Spell : Card {
         CombatSlot targetSlot = null;
 
         // Select spell targets
-        print("Spell " + spellData.name + "ready! Select " + cardText.numTargetTimes + " targets.");
+        print("Spell " + spellData.name + "ready! Select " + cardText.targetArgs.numTargetTimes + " targets.");
         yield return StartCoroutine(Player.Instance.SelectTargets(new TargetArgs() {
             targetType =  cardText.targetArgs.targetType,
             originSlot = null,
             targetSlotState = cardText.targetArgs.targetSlotState,
             targetSameTeam = cardText.targetArgs.targetSameTeam,
             targetGroup =  cardText.targetArgs.targetGroup,
-        }, cardText.numTargetTimes, (ret) => { targetSlots = ret; }));
+            numTargetTimes = cardText.targetArgs.numTargetTimes,
+        }, (ret) => { targetSlots = ret; }));
         
         // Target select canceled, abort
         if (targetSlots == null) {

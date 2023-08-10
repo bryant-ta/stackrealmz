@@ -19,6 +19,7 @@ public static class Utils
         float t = 0f;
         while (t < 1) {
             t += Constants.CardMoveSpeed * Time.deltaTime;
+            if (!stack) yield break;
             stack.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
             yield return null;
         }
@@ -34,6 +35,7 @@ public static class Utils
         float t = 0f;
         while (t < 1) {
             t += Constants.CardMoveSpeed * Time.deltaTime;
+            if (!card) yield break;
             card.transform.localPosition = Vector3.Lerp(startPos, endPoint, t);
             yield return null;
         }

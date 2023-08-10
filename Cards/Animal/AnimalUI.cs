@@ -22,7 +22,7 @@ public class AnimalUI : CardUI {
 
     void Awake() {
         EventManager.Subscribe<int>(gameObject, EventID.SetManaCost, UpdateManaCostText);
-        EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowManaCostText);
+        EventManager.Subscribe(gameObject, EventID.ExitCombat, ShowManaCostText);
         EventManager.Subscribe(gameObject, EventID.EnterCombat, HideManaCostText);
         
         EventManager.Subscribe<int>(gameObject, EventID.Heal, UpdateHpText);

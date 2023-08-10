@@ -18,8 +18,6 @@ public class WaveManager : MonoBehaviour {
     Queue<SO_Animal> spawnQueue = new Queue<SO_Animal>();
     [SerializeField] List<CombatSlot> playSlots = new List<CombatSlot>();
 
-    public Transform cleanUpDepositPoint;
-
     CombatTicker waveTicker;
 
     public bool InBattle => inBattle;
@@ -81,33 +79,7 @@ public class WaveManager : MonoBehaviour {
         }
 
         // Gather all player animals on combat grid into one stack
-        SlotGrid combatGrid = spawnSlots[0].SlotGrid;
-        Stack gatheredStack = null;
-        bool first = true;
-        foreach (CombatSlot slot in combatGrid.slotGrid) {
-            Card card = slot.Card;
-            if (card) {
-                if (GameManager.Instance.animals.Contains(card)) {
-                    if (first) {
-                        gatheredStack = card.mStack;
-                        slot.PickUpHeld(false, true);
-                        first = false;
-                        continue;
-                    }
-
-                    card.mStack.PlaceAll(gatheredStack);
-                    StartCoroutine(Utils.MoveCardToPoint(card, gatheredStack.CalculateStackPosition(card)));
-                    slot.PickUpHeld(false, true);
-                } else {
-                    Transform stackTransform = slot.PickUpHeld(false, true);
-                    Destroy(stackTransform.gameObject);
-                }
-            }
-        }
-
-        if (gatheredStack) {
-            StartCoroutine(Utils.MoveStackToPoint(gatheredStack, cleanUpDepositPoint.position));
-        }
+        ExecutionManager.Instance.ExecuteReturnEffect(spawnSlots[0].SlotGrid.slotGrid.Cast<CombatSlot>().ToList());
     }
 
     // NextWave increments curWaveNum and starts the next wave. Called from waveTicker end.

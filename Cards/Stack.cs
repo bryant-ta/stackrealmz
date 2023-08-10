@@ -76,7 +76,7 @@ public class Stack : MonoBehaviour {
         
         // TODO: TEMP: This is temp way to apply food affects to animals
         if (stack.Last() is Food f && stack.First() is Animal a && stack.Count == 2) {
-            a.GetComponent<EffectController>().AddPermEffect(f.foodEffect);
+            a.GetComponent<EffectController>().AddEffect(f.foodEffect);
             RemoveCard(f);
             Destroy(f.gameObject);
             yield break;

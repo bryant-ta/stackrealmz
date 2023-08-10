@@ -38,15 +38,15 @@ public class Effect {
     
     // Returns true if this Effect is the real aura effect of the input aura effect (is the effect placed on neighbors)
     public bool IsAuraRealEffect(Effect auraEffect) {
-        return name == auraEffect.name && effectPermanence == EffectPermanence.Permanent &&
+        return name == auraEffect.name && effectPermanence == EffectPermanence.Temporary &&
                auraEffect.effectPermanence == EffectPermanence.Aura && source == auraEffect.source;
     }
 }
 
 public static class EffectPresetLookup {
     public static Dictionary<string, Effect> effectPresets = new Dictionary<string, Effect>() {
-        {"Burn", new Effect("Burn", EffectType.DamageEffect, EffectPermanence.Duration, 1, 1)},
-        {"Poison", new Effect("Poison", EffectType.DamageEffect, EffectPermanence.Duration, 1, 1)},
+        {"Burn", new Effect("Burn", EffectType.Damage, EffectPermanence.Duration, 1, 2)},
+        {"Poison", new Effect("Poison", EffectType.Poison, EffectPermanence.Permanent, 1, 1)},
     };
 }
 
@@ -54,5 +54,5 @@ public enum EffectPermanence {
     Permanent = 0,
     Temporary = 1,
     Duration = 2,
-    Aura = 3,
+    Aura = 4,
 }

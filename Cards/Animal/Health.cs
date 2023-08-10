@@ -14,27 +14,32 @@ public class Health : MonoBehaviour {
         }
     }
 
-    public void Damage(int value) {
+    public int Damage(int value) {
         if (armor > 0 && value > 0) {
             ModifyArmor(-1);
+            return 0;
         } else {
-            ModifyHp(-value);
+            return ModifyHp(-value);
         }
     }
     
-    // Positive input heals. Negative input damages.
-    public void ModifyHp(int value) {
+    // Positive input heals. Negative input damages. Returns actual hp value change.
+    public int ModifyHp(int value) {
         int newHp = hp + value;
         if (newHp <= 0) {
             newHp = 0;
         } else if (newHp > maxHp) {
             newHp = maxHp;
         }
+
+        int delta = newHp - hp;
         
         if (value < 0) EventManager.Invoke(gameObject, EventID.Damage, newHp);
         else if (value > 0) EventManager.Invoke(gameObject, EventID.Heal, newHp);
         
         SetHp(newHp);
+
+        return delta;
     }
 
     public void ModifyMaxHp(int value) {

@@ -94,14 +94,21 @@ public class CombatSlot : Slot
 
     // SwapWithCombatSlot swaps two CombatSlots' Animals. If one slot does not have an Animal, this will
     // act as a move instead.
-    public void SwapWithCombatSlot(CombatSlot slot) {
+    public bool SwapWithCombatSlot(CombatSlot slot) {
+        if ((animal && animal.EffectCtrl.FindEffect(EffectType.Rooted) != null) || (slot.Animal && slot.Animal.EffectCtrl.FindEffect(EffectType.Rooted) != null)) {
+            Debug.Log("Cannot move Rooted card!");
+            return false;
+        }
+
         Animal temp = animal;
         
         Transform ret = PickUpHeld();
-        if (ret == null) return;
+        if (ret == null) return false;
 
         slot.MoveHeldToCombatSlot(this);
+        
         slot.PlaceAndMove(temp.mStack);
+        return true;
     }
 
     // Manipulation funcs for aura result effects to apply to held Animal (aura effect sourced from neighbor, modifies this)
