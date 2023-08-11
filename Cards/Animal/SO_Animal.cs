@@ -42,14 +42,16 @@ public class CardText {
     public string text;
     // public List<Keyword> keywords = new List<Keyword>();
     public EventID condition;
-    public Effect effect;
+    public List<Effect> effects = new List<Effect>();
     public TargetArgs targetArgs;
 
     public CardText(CardText cardText) {
         // keywords = cardText.keywords.ToList();
         
         condition = cardText.condition;
-        effect = new Effect(cardText.effect);
+        foreach (var e in cardText.effects) {
+            effects.Add(new Effect(e));
+        }
         
         targetArgs.targetType = cardText.targetArgs.targetType;
         targetArgs.originSlot = cardText.targetArgs.originSlot;
@@ -61,5 +63,5 @@ public class CardText {
         text = cardText.text;
     }
     
-    public CardText(Effect effect) { this.effect = new Effect(effect); }
+    public CardText(Effect effect) { this.effects.Add(new Effect(effect)); }
 }

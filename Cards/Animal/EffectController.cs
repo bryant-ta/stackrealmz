@@ -20,8 +20,6 @@ public class EffectController : MonoBehaviour {
         EventManager.Subscribe(gameObject, EventID.ExitCombat, ResetEffects);
         EventManager.Subscribe(mAnimal.gameObject, EventID.CardPickedUp, RemoveAuraEffectFromTargets); // aura source moved away, remove aura from all neighbors
     }
-    
-    
 
     // AddEffect handles input effect based on its effect permanence
     //   note: used enum instead of derived classes (PermEffect, TempEffect...) bc ExecuteEffect would need to get
@@ -54,7 +52,7 @@ public class EffectController : MonoBehaviour {
         e.effectFunc.Apply(mAnimal.mCombatSlot, new EffectArgs() {val = e.baseValue});
         
         // Don't add effect that is pure one-time damage
-        if (e.name != "Damage") permEffects.Add(e);
+        if (e.effectType == EffectType.Damage) permEffects.Add(e);
     }
     // AddTempEffect handles one time effects (execute once, removeable)            Note: does not support execute once, remove after duration - but what effect even needs that??
     void AddTempEffect(Effect e) {

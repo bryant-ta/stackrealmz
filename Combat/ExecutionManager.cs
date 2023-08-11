@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,6 +11,7 @@ public class ExecutionManager : MonoBehaviour {
 
     [SerializeField] SlotGrid combatGrid;
     List<EffectOrder> effectOrders = new List<EffectOrder>();
+    List<AttackOrder> attackOrders = new List<AttackOrder>();
 
     void Awake() {
         if (_instance != null && _instance != this) {
@@ -23,31 +25,46 @@ public class ExecutionManager : MonoBehaviour {
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EnableTriggerEffects);
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, DisableTriggerEffects);
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableTriggerEffects);
+        
+        CombatClock.onTick.AddListener(DoTriggerAttackOrder);
     }
 
-    float timer = 0;
     void Update() {
-        
-        if (timer >= 2) {
-            print("r");
-            timer = 0;
-            TriggerEffectOrders(); 
-        }
-
-        timer +=  Time.deltaTime;
+        TriggerEffectOrders(); 
     }
 
     /****************   Effect Order Management   ****************/
 
     public void RegisterEffectOrder(Animal origin, EventID condition) {
-        EventManager.Subscribe<EffectOrder>(origin.gameObject, condition, AddEffectOrder);
+        EventManager.Subscribe<EffectOrder>(origin.gameObject, condition, QueueEffectOrder);
     }
 
-    public void AddEffectOrder(EffectOrder effectOrder) { effectOrders.Add(effectOrder); }
-
+    public void QueueAttackOrder(AttackOrder ao) { attackOrders.Add(ao); }
+    public void QueueEffectOrder(EffectOrder effectOrder) { effectOrders.Add(effectOrder); }
+    
+    void SortAttackOrders() { attackOrders.Sort((a, b) => a.priority.CompareTo(b.priority)); }
     // TODO: Move executeDurationEffects loop to here to do them in priority order
-    // TODO: sort based on origin location or assigned effect priority for consistent effect resolution
     void SortEffectOrders() { }
+    
+    /****************   Attack Execution   ****************/
+
+    void DoTriggerAttackOrder() { StartCoroutine(TriggerAttackOrders()); }
+    IEnumerator TriggerAttackOrders() {
+        yield return null;
+        
+        SortAttackOrders();
+        
+        foreach (AttackOrder ao in attackOrders) {
+            if (!ao.animal) {
+                continue;
+            }
+            ao.animal.Attack();
+
+            yield return new WaitForSeconds(0.25f);
+        }
+        
+        attackOrders.Clear();
+    }
 
     /****************   Effect Execution   ****************/
 
@@ -63,6 +80,7 @@ public class ExecutionManager : MonoBehaviour {
 
     void TriggerEffectOrders() {
         foreach (EffectOrder eo in effectOrders) {
+            // Get targets
             List<CombatSlot> targetSlots = new List<CombatSlot>();
             for (int i = 0; i < eo.cardText.targetArgs.numTargetTimes; i++) {
                 List<CombatSlot> t = TargetTypes.GetTargets(new TargetArgs() {
@@ -78,23 +96,23 @@ public class ExecutionManager : MonoBehaviour {
                 targetSlots = targetSlots.Concat(t).ToList();
             }
 
-            // Effect Execution
-
-            Effect e = eo.cardText.effect;
+            // Apply effects
             Animal effectOrigin = eo.originSlot.Animal;
-            if (e.effectType == EffectType.Summon) {
-                ExecuteSummonEffect(eo.cardText.effect, targetSlots);
-            } else if (e.effectType == EffectType.Return) {
-                ExecuteReturnEffect(targetSlots);
-            } else if (e.effectPermanence == EffectPermanence.Aura) {
-                effectOrigin.EffectCtrl.AddAuraEffect(e);
-            } else {
-                for (int i = 0; i < targetSlots.Count; i++) {
-                    if (!targetSlots[i].IsEmpty()) {
-                        targetSlots[i].Animal.EffectCtrl.AddEffect(e);
-                    }
+            foreach (Effect e in eo.cardText.effects) {
+                if (e.effectType == EffectType.Summon) {
+                    ExecuteSummonEffect(e, targetSlots);
+                } else if (e.effectType == EffectType.Return) {
+                    ExecuteReturnEffect(targetSlots);
+                } else if (e.effectPermanence == EffectPermanence.Aura) {
+                    effectOrigin.EffectCtrl.AddAuraEffect(e);
+                } else {
+                    for (int i = 0; i < targetSlots.Count; i++) {
+                        if (!targetSlots[i].IsEmpty()) {
+                            targetSlots[i].Animal.EffectCtrl.AddEffect(e);
+                        }
 
-                    print("activating effect: " + eo.cardText.effect.name);
+                        print("activating effect: " + e.name);
+                    }
                 }
             }
         }
@@ -175,4 +193,9 @@ public class ExecutionManager : MonoBehaviour {
 public struct EffectOrder {
     public CombatSlot originSlot;
     public CardText cardText;
+}
+
+public struct AttackOrder {
+    public int priority;
+    public Animal animal;
 }

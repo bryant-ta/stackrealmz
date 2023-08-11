@@ -10,7 +10,7 @@ public class Animal : Card {
     public Stat atk;
     public Stat speed;
     // public Stat ablPwr;
-    // ublic Stat ablCd;
+    // public Stat ablCd;
 
     public Attack attack;
     public CardText cardText;
@@ -39,8 +39,10 @@ public class Animal : Card {
         // ablPwr = new Stat(animalData.ablPwr);
 
         cardText = new CardText(animalData.cardText);
-        cardText.effect.effectFunc = EffectTypeLookUp.CreateEffect(cardText.effect.effectType);
-        cardText.effect.source = this;
+        foreach (var e in cardText.effects) {
+            e.effectFunc = EffectTypeLookUp.CreateEffect(e.effectType);
+            e.source = this;
+        }
         group = animalData.group;
         
         attack = animalData.attack;
@@ -50,11 +52,11 @@ public class Animal : Card {
 
         effectCtrl = GetComponent<EffectController>();
         if (!effectCtrl) Debug.LogError("No EffectController found for this Animal");
-        
+
         EventManager.Subscribe(gameObject, EventID.Death, Death);
-        EventManager.Subscribe(gameObject, EventID.AttackReady, Attack);
+        EventManager.Subscribe(gameObject, EventID.AttackReady, QueueAttack);
         EventManager.Subscribe(gameObject, EventID.SecondaryDown, Ability);
-        
+
         EventManager.Subscribe(gameObject, cardText.condition, TriggerCardText);
     }
 
@@ -63,7 +65,9 @@ public class Animal : Card {
     }
 
     void TriggerCardText() {
-        if (cardText.effect.effectType == EffectType.None) return;
+        foreach (Effect e in cardText.effects) { // if EffectType.None exists in card effects, do not trigger any effects
+            if (e.effectType == EffectType.None) return;
+        }
         
         EventManager.Invoke(gameObject, cardText.condition, new EffectOrder() {
             originSlot = mCombatSlot,
@@ -78,7 +82,7 @@ public class Animal : Card {
         attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, speed.Value, false);
         // abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
 
-        EffectManager.Instance.RegisterEffectOrder(this, cardText.condition);
+        ExecutionManager.Instance.RegisterEffectOrder(this, cardText.condition);
         EventManager.Invoke(gameObject, EventID.EnterCombat);
     }
     public void EndCombatState() {
@@ -90,21 +94,20 @@ public class Animal : Card {
         EventManager.Invoke(gameObject, EventID.ExitCombat);
     }
 
-    void Attack() {
+    void QueueAttack() { ExecutionManager.Instance.QueueAttackOrder(new AttackOrder { priority = mCombatSlot.executionPriority, animal = this }); }
+    public void Attack() {
         int terrainModifier = 1;
         CombatSlot curCombatSlot = mCombatSlot;
         if (!curCombatSlot) {
-            Debug.LogErrorFormat("Current slot {0} is not type CombatSlot. Attack failed.", name);
+            Debug.LogErrorFormat("Current slot {0} is not type CombatSlot. SendAttack failed.", name);
             return;
         }
 
         // if (curCombatSlot.terrain == animalData.terrainPref) { terrainModifier = 2; }   // TEMP: temp value
         int dmg = atk.Value * terrainModifier;
-
-        if (!attack.attackFunc.Attack(attack.targetType, mCombatSlot, dmg)) {
-            attackTicker.Start();   // hit nothing
-        } else {
-            attackTicker.Reset();   // hit something, reset timer
+            
+        if (attack.attackFunc.Attack(attack.targetType, mCombatSlot, dmg)) {
+            attackTicker.Reset(); // hit something, reset timer
             attackTicker.Start();
             
             EventManager.Invoke(gameObject, EventID.Attack);

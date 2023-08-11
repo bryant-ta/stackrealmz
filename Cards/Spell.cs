@@ -14,7 +14,10 @@ public class Spell : Card {
         manaCost = new Stat(spellData.manaCost);
         
         cardText = spellData.cardText;
-        cardText.effect.effectFunc = EffectTypeLookUp.CreateEffect(cardText.effect.effectType);
+        foreach (var e in cardText.effects) {
+            e.effectFunc = EffectTypeLookUp.CreateEffect(e.effectType);
+            e.source = this;
+        }
 
         spellFunc = SpellTypeLookUp.LookUp[spellData.spellType];
         

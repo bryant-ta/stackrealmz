@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class CombatSlot : Slot
-{
+public class CombatSlot : Slot {
     public Animal Animal { get => animal; private set { animal = value; } }
     [SerializeField] protected Animal animal;
 
     public bool isEnemySlot;
+    public int executionPriority;
     public Terrain terrain;
     
     public List<Effect> activeAuraEffects = new List<Effect>();

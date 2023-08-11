@@ -33,7 +33,7 @@ public class EffectSpell : ISpell {
                 originSlot = slot,
                 cardText = cardText,
             };
-            ExecutionManager.Instance.AddEffectOrder(eo);
+            ExecutionManager.Instance.QueueEffectOrder(eo);
         }
     }
 }
