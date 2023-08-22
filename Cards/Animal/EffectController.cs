@@ -52,7 +52,7 @@ public class EffectController : MonoBehaviour {
         e.effectFunc.Apply(mAnimal.mCombatSlot, new EffectArgs() {val = e.baseValue});
         
         // Don't add effect that is pure one-time damage
-        if (e.effectType == EffectType.Damage) permEffects.Add(e);
+        if (e.effectType != EffectType.Damage) permEffects.Add(e);
     }
     // AddTempEffect handles one time effects (execute once, removeable)            Note: does not support execute once, remove after duration - but what effect even needs that??
     void AddTempEffect(Effect e) {

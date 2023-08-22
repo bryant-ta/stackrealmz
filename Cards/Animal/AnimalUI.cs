@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -46,7 +45,7 @@ public class AnimalUI : CardUI {
         base.Start();
         manaCostText.text = mAnimal.animalData.manaCost.ToString();
         hpText.text = mAnimal.animalData.hp.ToString();
-        attackText.text = mAnimal.animalData.atkDmg.ToString();
+        attackText.text = mAnimal.animalData.atk.ToString();
     }
     
     /*******************   Mana   *******************/

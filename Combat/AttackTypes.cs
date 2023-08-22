@@ -12,8 +12,9 @@ using System.Collections.Generic;
 public enum AttackType {
     Standard,
     None,
-    Burn,
+    Double,
     Hidden,
+    Burn,
     Sunder,
     Piercing,
 }
@@ -22,8 +23,9 @@ public static class AttackTypeLookUp {
     public static Dictionary<AttackType, IAttack> LookUp = new Dictionary<AttackType, IAttack>() {
         {AttackType.Standard, new StandardAttack()},
         {AttackType.None, new NoneAttack()},
-        {AttackType.Burn, new BurnAttack()},
+        {AttackType.Double, new DoubleAttack()},
         {AttackType.Hidden, new HiddenAttack()},
+        {AttackType.Burn, new BurnAttack()},
         {AttackType.Sunder, new SunderAttack()},
         {AttackType.Piercing, new PiercingAttack()},
     };
@@ -69,6 +71,27 @@ public class NoneAttack : IAttack {
     }
 }
 
+public class DoubleAttack : IAttack {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
+        bool ret1 = AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
+        if (!ret1) return false;
+        
+        AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
+
+        return true;    // always return true after second attack since first must have hit
+    }
+}
+
+public class HiddenAttack : IAttack {
+    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
+        if (originSlot.Animal.EffectCtrl.FindEffect(EffectType.Hidden) != null) {
+            return AttackTypeLookUp.LookUp[AttackType.Double].Attack(targetType, originSlot, dmg);
+        } else {
+            return AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
+        }
+    }
+}
+
 public class BurnAttack : IAttack {
     public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
         List<CombatSlot> targetSlots = TargetTypes.GetTargets(new TargetArgs() {
@@ -82,8 +105,8 @@ public class BurnAttack : IAttack {
             foreach (CombatSlot c in targetSlots) {
                 Effect e = EffectPresetLookup.effectPresets["Burn"];
                 e.source = originSlot.Animal;
-                e.baseValue = dmg;
-                EffectOrder eo = new EffectOrder() {originSlot = originSlot, cardText = new CardText(e)};
+                e.remainingDuration = dmg;
+                
                 c.Animal.EffectCtrl.AddEffect(e);
             }
             return true;
@@ -91,18 +114,6 @@ public class BurnAttack : IAttack {
 
         // cannot burn player
 
-        return false;
-    }
-}
-
-public class HiddenAttack : IAttack {
-    public bool Attack(TargetType targetType, CombatSlot originSlot, int dmg) {
-        if (originSlot.Animal.EffectCtrl.FindEffect(EffectType.Hidden) != null) {
-            AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
-        }
-        
-        AttackTypeLookUp.LookUp[AttackType.Standard].Attack(targetType, originSlot, dmg);
-        
         return false;
     }
 }
@@ -158,6 +169,13 @@ public class PiercingAttack : IAttack {
 
                 if (targetBehind.Count > 0) {
                     targetBehind[0].Animal.health.Damage(dmg - (-realDmg));
+                    return true;
+                }
+        
+                // nothing left in row to hit, enemy can hit player
+                if (originSlot.Animal.isEnemy) {
+                    GameManager.Instance.playerLife.ModifyHp(-dmg);
+                    return true;
                 }
             }
         }

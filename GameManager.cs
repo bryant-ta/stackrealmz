@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,6 +18,8 @@ public class GameManager : MonoBehaviour {
     public List<Animal> enemies;
 
     // Time Vars
+    public int day = 1;
+    
     public int TimeScale => _timeScale;
     [SerializeField] int _timeScale;
     [SerializeField] int dayDuration = 1;
@@ -36,10 +37,10 @@ public class GameManager : MonoBehaviour {
     // Money Vars
     public int Money => _money;
     [SerializeField] int _money;
-
-    // Events
-    public static UnityEvent onDayEnd = new UnityEvent();
-    public static UnityEvent onNightEnd = new UnityEvent();
+    
+    // Modifiers
+    public Modifiers playerMods;
+    public Modifiers enemyMods;
 
     //Debug
     public bool doEating;
@@ -54,8 +55,13 @@ public class GameManager : MonoBehaviour {
 
     void Start() {
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EnableManaGen);
+        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EndDay);
+        
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableManaGen);
+        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, EndNight);
+        
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, LostGame);
+        
         
         StartCoroutine(GameLoop());
 
@@ -66,12 +72,15 @@ public class GameManager : MonoBehaviour {
 
     IEnumerator GameLoop() {
         while (true) {
-            yield return StartCoroutine(TimeCycle(dayDuration, onDayEnd));
-            yield return StartCoroutine(TimeCycle(nightDuration, onNightEnd));
+            yield return StartCoroutine(TimeCycle(dayDuration, EventID.EndDay));
+            yield return StartCoroutine(TimeCycle(nightDuration, EventID.EndNight));
+            
+            day++;
+            UIManager.Instance.UpdateDayText(day);
         }
     }
 
-    IEnumerator TimeCycle(float duration, UnityEvent endEvent) {
+    IEnumerator TimeCycle(float duration, EventID endEvent) {
         while (curTime < duration) {
             curTime += Time.deltaTime * _timeScale;
             UIManager.Instance.UpdateTimeProgressBar(curTime / duration);
@@ -80,9 +89,9 @@ public class GameManager : MonoBehaviour {
 
         curTime = 0;
         UIManager.Instance.UpdateTimeProgressBar(curTime / duration);
-        endEvent.Invoke();
         
-
+        EventManager.Invoke(gameObject, endEvent);
+        
         // if (doEating) {
         //     foreach (Animal v in animals) {
         //         if (foods.Count == 0) {
@@ -95,6 +104,14 @@ public class GameManager : MonoBehaviour {
         //     }
         // }
     }
+    void EndDay() {
+        curTime = dayDuration;
+    }
+    void EndNight() {
+        curTime = nightDuration;
+    }
+
+    public void IncreaseCurTime(float n) { curTime += n; }
 
     void WonGame() {
         
@@ -112,7 +129,8 @@ public class GameManager : MonoBehaviour {
         }
     }
     
-    // Mana funcs
+    /**********************   Mana Funcs   *********************/
+    
     void EnableManaGen() { CombatClock.onTick.AddListener(IncrementMana); }
     void DisableManaGen() { 
         CombatClock.onTick.RemoveListener(IncrementMana); 
@@ -145,6 +163,8 @@ public class GameManager : MonoBehaviour {
         EventManager.Invoke(gameObject, EventID.ModifyMaxMana, args);
     }
 
+    /**********************   Money Funcs   *********************/
+    
     public bool ModifyMoney(int value) {
         int newMoney = _money + value;
         if (newMoney < 0) {

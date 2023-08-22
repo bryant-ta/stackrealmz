@@ -45,7 +45,7 @@ public class Effect {
 
 public static class EffectPresetLookup {
     public static Dictionary<string, Effect> effectPresets = new Dictionary<string, Effect>() {
-        {"Burn", new Effect("Burn", EffectType.Damage, EffectPermanence.Duration, 1, 3)},
+        {"Burn", new Effect("Burn", EffectType.Burn, EffectPermanence.Duration, 1, 2)},
     };
 }
 

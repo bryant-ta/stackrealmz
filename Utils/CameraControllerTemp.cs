@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CameraController : MonoBehaviour
+public class CameraControllerTemp : MonoBehaviour
 {
     public Transform targetZoomIn;
     public float zoomInFOV = 5f;

@@ -109,6 +109,7 @@ public class Stack : MonoBehaviour {
                 }
             }
             
+            // Clean up used materials
             if (validRecipe.reusableMaterials.Length > 0) {     // Keep cards marked by recipe
                 foreach (Card c in stack.ToList()) {
                     if (validRecipe.reusableMaterials.Contains(c.name)) {
@@ -135,9 +136,14 @@ public class Stack : MonoBehaviour {
             sheet.transform.position = Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position);
             return;
         }
+        // Physics.CheckBox, or disable/enable collider right after instantiate
+        // TODO: try to use MoveableCard.Drop
         
         Stack s = CardFactory.CreateStack(Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position), cSO);
     }
+
+
+
 
     IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
         if (craftTime == 0) {

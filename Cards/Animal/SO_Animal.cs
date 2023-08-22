@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "Cards/SO_Animal")]
 public class SO_Animal : SO_Card {
     public int manaCost;
     public int hp;
-    public int atkDmg;
-    public int speed;
+    public int atk;
+    public int spd;
     public int ablPwr;
     public int ablCd;
 
@@ -28,6 +26,7 @@ public enum Group {
     Artillery,
     Plant,
     Evergreen,
+    Gobbly,
 }
 
 [Serializable]
@@ -64,4 +63,6 @@ public class CardText {
     }
     
     public CardText(Effect effect) { this.effects.Add(new Effect(effect)); }
+
+    public CardText() { }
 }

@@ -15,6 +15,7 @@ public enum Rarity {
     Rare = 1,
     Epic = 2,
     Legendary = 3,
+    None = 4,
 }
 
 public enum Realm {

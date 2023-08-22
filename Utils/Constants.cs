@@ -10,8 +10,12 @@ public static class Constants {
     // Path Vars
     public static string CardDataPath = "Assets/SO/Cards/";
     public static string AnimalDataPath = "Assets/SO/Animals/";
+    public static string EnemiesDataPath = "Assets/SO/Enemies/";
     public static string RecipeDataPath = "Assets/SO/Recipes/";
+    public static string BattlesDataPath = "Assets/SO/Battles/";
     public static string PacksDataPath = "Assets/SO/CardPacks/";
+
+    public static string CardArtPath = "Assets/Art/Cards/";
     
     public static string TestDataPath = "Assets/SO/Test/";
 }

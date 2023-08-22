@@ -21,6 +21,7 @@ public class Card : MonoBehaviour {
         image = cardData.image;
 
         gameObject.name = name;
+        
 
         if (transform.parent != null && transform.parent.TryGetComponent(out Stack s)) {
             mStack = s;

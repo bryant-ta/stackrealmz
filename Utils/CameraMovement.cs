@@ -111,18 +111,16 @@
 
         void GetKeyboardMovement()
         {
-            Vector3 inputValue = movement.ReadValue<Vector2>().x * Vector3.right
-                        + movement.ReadValue<Vector2>().y * Vector3.forward;
+            Vector3 inputValue = movement.ReadValue<Vector2>().x * Vector3.right + movement.ReadValue<Vector2>().y * Vector3.forward;
 
             inputValue = inputValue.normalized;
-
             if (inputValue.sqrMagnitude > 0.1f)
                 targetPosition += inputValue;
         }
 
         void DragCamera()
         {
-            if (!Mouse.current.middleButton.isPressed)
+            if (!Mouse.current.rightButton.isPressed)
                 return;
 
             //create plane to raycast to
@@ -131,7 +129,7 @@
         
             if(plane.Raycast(ray, out float distance))
             {
-                if (Mouse.current.middleButton.wasPressedThisFrame)
+                if (Mouse.current.rightButton.wasPressedThisFrame)
                     startDrag = ray.GetPoint(distance);
                 else
                     targetPosition += startDrag - ray.GetPoint(distance);

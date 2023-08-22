@@ -8,7 +8,7 @@ public class Animal : Card {
     public Health health;
     public Stat manaCost;
     public Stat atk;
-    public Stat speed;
+    public Stat spd;
     // public Stat ablPwr;
     // public Stat ablCd;
 
@@ -33,8 +33,8 @@ public class Animal : Card {
         
         Setup(animalData);
         manaCost = new Stat(animalData.manaCost);
-        atk = new Stat(animalData.atkDmg);
-        speed = new Stat(animalData.speed);
+        atk = new Stat(animalData.atk);
+        spd = new Stat(animalData.spd);
         // ablCd = new Stat(animalData.ablCd);
         // ablPwr = new Stat(animalData.ablPwr);
 
@@ -79,7 +79,8 @@ public class Animal : Card {
         // TODO: ensure atkSpd/ablCd correctly updates tickers
         isInCombat = true;
         
-        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, speed.Value, false);
+        
+        attackTicker = new CombatTicker(gameObject, EventID.AttackTick, EventID.AttackReady, spd.Value, false);
         // abilityTicker = new CombatTicker(gameObject, EventID.AbilityTick, EventID.AbilityReady, ablCd.Value, false);
 
         ExecutionManager.Instance.RegisterEffectOrder(this, cardText.condition);
@@ -138,7 +139,7 @@ public class Animal : Card {
 
     IEnumerator DestroyNextFrame() {
         yield return null;
-
+        
         if (mSlot) {
             mSlot.PickUpHeld();
         }

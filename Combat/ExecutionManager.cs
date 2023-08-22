@@ -54,7 +54,7 @@ public class ExecutionManager : MonoBehaviour {
         
         SortAttackOrders();
         
-        foreach (AttackOrder ao in attackOrders) {
+        foreach (AttackOrder ao in attackOrders.ToList()) {
             if (!ao.animal) {
                 continue;
             }
@@ -82,15 +82,16 @@ public class ExecutionManager : MonoBehaviour {
         foreach (EffectOrder eo in effectOrders) {
             // Get targets
             List<CombatSlot> targetSlots = new List<CombatSlot>();
+            TargetArgs targetArgs = new TargetArgs() {
+                targetType = eo.cardText.targetArgs.targetType,
+                originSlot = eo.originSlot,
+                targetSlotState = eo.cardText.targetArgs.targetSlotState,
+                targetSameTeam = eo.cardText.targetArgs.targetSameTeam,
+                targetGroup = eo.cardText.targetArgs.targetGroup,
+                numTargetTimes = eo.cardText.targetArgs.numTargetTimes,
+            };
             for (int i = 0; i < eo.cardText.targetArgs.numTargetTimes; i++) {
-                List<CombatSlot> t = TargetTypes.GetTargets(new TargetArgs() {
-                    targetType = eo.cardText.targetArgs.targetType,
-                    originSlot = eo.originSlot,
-                    targetSlotState = eo.cardText.targetArgs.targetSlotState,
-                    targetSameTeam = eo.cardText.targetArgs.targetSameTeam,
-                    targetGroup = eo.cardText.targetArgs.targetGroup,
-                    numTargetTimes = eo.cardText.targetArgs.numTargetTimes,
-                });
+                List<CombatSlot> t = TargetTypes.GetTargets(targetArgs);
                 if (t == null || t.Count == 0) continue;
 
                 targetSlots = targetSlots.Concat(t).ToList();
@@ -100,7 +101,7 @@ public class ExecutionManager : MonoBehaviour {
             Animal effectOrigin = eo.originSlot.Animal;
             foreach (Effect e in eo.cardText.effects) {
                 if (e.effectType == EffectType.Summon) {
-                    ExecuteSummonEffect(e, targetSlots);
+                    ExecuteSummonEffect(targetArgs, e, targetSlots);
                 } else if (e.effectType == EffectType.Return) {
                     ExecuteReturnEffect(targetSlots);
                 } else if (e.effectPermanence == EffectPermanence.Aura) {
@@ -132,7 +133,7 @@ public class ExecutionManager : MonoBehaviour {
                     print(e.name + " " + e.remainingDuration);
                     e.effectFunc.Apply(c.Animal.mSlot as CombatSlot, new EffectArgs() {val = e.baseValue});
                     
-                    if (e.remainingDuration > 0) e.remainingDuration--;
+                    if (e.remainingDuration > 0) e.remainingDuration--; // todo: i think this is wrong
 
                     if (e.remainingDuration == 0) c.Animal.EffectCtrl.RemoveEffect(e);
                 }
@@ -143,13 +144,28 @@ public class ExecutionManager : MonoBehaviour {
     // ExecuteSummonEffect handles spawning new cards in combat from summon effects.
     // - Spawn location is determined by TargetType
     // - Prioritizes spawn slots based on list order
-    // - If there are no more valid spawn slots, then chooses a random adjacent empty slot. If there is none, nothing will be spawned.
-    void ExecuteSummonEffect(Effect effect, List<CombatSlot> spawnSlots) {
+    void ExecuteSummonEffect(TargetArgs targetArgs, Effect effect, List<CombatSlot> spawnSlots) {
         foreach (CombatSlot spawnSlot in spawnSlots) {
-            Stack s = spawnSlot.SpawnCard(effect.summonData);
-            if (!s) {
-                Debug.LogError("ExecuteSummonEffect: tried spawning in non-empty slot");
+            // Summon on Death effect, need to wait for origin to be cleaned up first
+            if (targetArgs.targetType == TargetType.Self && spawnSlot == targetArgs.originSlot) {
+                StartCoroutine(DeathSummon(effect.summonData, spawnSlot));
+            } else {
+                Stack s = spawnSlot.SpawnCard(effect.summonData);
+                if (!s) {
+                    Debug.LogError("ExecuteSummonEffect: tried spawning in non-empty slot");
+                }
             }
+        }
+    }
+    
+    // DeathSummon continuously tries to spawn card from summon on death effect, when card is spawned in same spot as origin
+    // - Should spawn card 1 frame after Animal is cleaned up from its slot
+    IEnumerator DeathSummon(SO_Card summonData, CombatSlot spawnSlot) {
+        Stack s = null;
+        while (s == null) {
+            yield return null;
+        
+            s = spawnSlot.SpawnCard(summonData);
         }
     }
     

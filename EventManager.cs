@@ -14,6 +14,8 @@ public enum EventID {
     ModifyMaxMana = 14,
     WonGame = 30,
     LostGame = 31,
+    EndDay = 32,
+    EndNight = 33,
     CraftDone = 50,
     EnterCombat = 101,
     ExitCombat = 102,

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public enum TargetType {
     Standard       = 0, // first in enemy row
@@ -16,7 +17,6 @@ public enum TargetType {
     Random         = 30,
     RandomAdjacent = 31,
     Select         = 40, // selection, only used by player (Spells)
-    FrontThree     = 50,
     Sweep          = 51, // Standard + above target + below target
     AllInRow       = 52,
     AllInEnemyRow  = 53,
@@ -96,12 +96,18 @@ public static class TargetTypes {
                 if (CheckTargetArgs(targetSlot, args.originSlot, targetEmpty, targetAny, true)) targets.Add(targetSlot);
                 return targets;
             case TargetType.Team: {
-                return SelectTargetsOfTeam(combatGrid, args.originSlot, args.targetSameTeam, args.targetGroup);
+                return SelectTargetsOfTeam(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny, args.targetGroup);
             }
-            case TargetType.Random:
-                break;
-            case TargetType.RandomAdjacent:
-                break;
+            case TargetType.Random: {
+                List<CombatSlot> selectableSlots = SelectTargetsOfTeam(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny, args.targetGroup);
+                targets.Add(selectableSlots[Random.Range(0, selectableSlots.Count)]);
+                return targets;
+            }
+            case TargetType.RandomAdjacent: {
+                List<CombatSlot> selectableSlots = SelectTargetsAdjacent(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny);
+                targets.Add(selectableSlots[Random.Range(0, selectableSlots.Count)]);
+                return targets;
+            }
             case TargetType.Select: // only used by player (Spells)
                 if ((targetAny || (targetEmpty ? args.originSlot.IsEmpty() : !args.originSlot.IsEmpty())) &&
                     (args.targetSameTeam ? !enemyCalled : enemyCalled) &&
@@ -109,8 +115,6 @@ public static class TargetTypes {
                     targets.Add(args.originSlot); 
                 }
                 return targets;
-            case TargetType.FrontThree:
-                break;
             case TargetType.Sweep: {
                 CombatSlot focus = SelectStandard(combatGrid, args.originSlot);
                 if (focus) {
@@ -160,12 +164,12 @@ public static class TargetTypes {
         return null;
     }
 
-    static List<CombatSlot> SelectTargetsOfTeam(SlotGrid combatGrid, CombatSlot origin, bool targetSameTeam, Group targetGroup = Group.None) {
+    static List<CombatSlot> SelectTargetsOfTeam(SlotGrid combatGrid, CombatSlot originSlot, bool targetSameTeam, bool targetEmpty, bool targetAny, Group targetGroup = Group.None) {
         List<CombatSlot> targets = new List<CombatSlot>();
-        foreach (CombatSlot slot in combatGrid.slotGrid) {
-            if (!slot.IsEmpty() && CheckTeam(origin, slot, targetSameTeam) &&
-                ((targetGroup == Group.None) || slot.Animal.group == targetGroup)) {
-                targets.Add(slot);
+        foreach (CombatSlot targetSlot in combatGrid.slotGrid) {
+            if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam) &&
+                ((targetGroup == Group.None) || targetSlot.Animal.group == targetGroup)) {
+                targets.Add(targetSlot);
             }
         }
 

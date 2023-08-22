@@ -133,8 +133,7 @@ public class CardFactory : MonoBehaviour {
         }
         
         // Load recipes from Assets
-        for (int i = 0; i < assetPaths.Length; i++)
-        {
+        for (int i = 0; i < assetPaths.Length; i++) {
             string assetPath = AssetDatabase.GUIDToAssetPath(assetPaths[i]);
             SO_Recipe recipeData = AssetDatabase.LoadAssetAtPath<SO_Recipe>(assetPath);
 
