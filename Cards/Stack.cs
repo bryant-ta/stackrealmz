@@ -12,6 +12,8 @@ public class Stack : MonoBehaviour {
     [SerializeField] bool isChanged;
     public bool isLocked;
 
+    public int craftingSnapRange;
+
     void Start() {
         EventManager.Subscribe(gameObject, EventID.CraftDone, TryCraft);
     }
@@ -23,15 +25,15 @@ public class Stack : MonoBehaviour {
     }
 
     // null input treated as placing stack on nothing
-    public void PlaceAll(Stack otherStack) {
-        if (otherStack == null) {
+    public void PlaceAll(Stack destStack) {
+        if (destStack == null) {
             TryCraft();
             return;
         }
 
-        MoveCardRangeTo(otherStack, 0, stack.Count);
-        otherStack.isChanged = true;
-        otherStack.TryCraft();
+        MoveCardRangeTo(destStack, 0, stack.Count);
+        destStack.isChanged = true;
+        destStack.TryCraft();
     }
     
     public Transform PickUp(Card card) {
@@ -69,6 +71,28 @@ public class Stack : MonoBehaviour {
         }
     }
     
+    // Real TODO: This is shit, think of a better spell creation system or dont do at all
+    // // TODO: determine if dictionary or using SpellMaterial component composition is better (this is simpler for simple system)
+    // Dictionary<string, CardText> spellMaterialCardTexts = new Dictionary<string, CardText>();
+    // Recipe CraftSpell(List<string> cardNames) {
+    //     SO_Spell spellData = new SO_Spell();
+    //     spellData.spellType = SpellType.Effect;
+    //     
+    //     Spell s = CardFactory.CreateBaseSpell(GetTopCard().transform.position);
+    //     
+    //     foreach (string cardName in cardNames) {
+    //         if (spellMaterialCardTexts.TryGetValue(cardName, out CardText cardText)) { // Get spell element-effect
+    //             CardText cardTextCopy = new CardText(cardText);
+    //             foreach (Effect effect in cardTextCopy.effects) {
+    //                 effect.source = s;
+    //             }
+    //         } 
+    //     }
+    //
+    //     Recipe recipe = new Recipe();
+    //     return recipe;
+    // }
+
     // must be coroutine for pausing on DoCraftTime
     IEnumerator Craft() {
         yield return null;  // required for isChanged to register correctly and interrupt crafting
@@ -84,6 +108,9 @@ public class Stack : MonoBehaviour {
         // END TEMP
         
         List<string> cardNames = GetCardsNamesInStack();
+        
+        // CraftSpell
+        
         Recipe validRecipe = CardFactory.LookupRecipe(cardNames);
         if (validRecipe == null) { yield break; }
         
@@ -101,11 +128,11 @@ public class Stack : MonoBehaviour {
                     if (cSO == null) {
                         continue;
                     }
-                    CreateProduct(cSO, i, validRecipe.numRandomProducts);
+                    CreateCraftedProduct(cSO, i, validRecipe.numRandomProducts);
                 }
             } else {
                 for (int i = 0; i < validRecipe.products.Count; i++) {
-                    CreateProduct(validRecipe.products[i], i, validRecipe.products.Count);
+                    CreateCraftedProduct(validRecipe.products[i], i, validRecipe.products.Count);
                 }
             }
             
@@ -130,20 +157,43 @@ public class Stack : MonoBehaviour {
         }
     }
 
-    void CreateProduct(SO_Card cSO, int i, int total) {
+    void CreateCraftedProduct(SO_Card cSO, int i, int total) {
         if (cSO is SO_Sheet sSO) {
             Sheet sheet = CardFactory.CreateSheet(sSO);
             sheet.transform.position = Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position);
             return;
         }
-        // Physics.CheckBox, or disable/enable collider right after instantiate
-        // TODO: try to use MoveableCard.Drop
         
-        Stack s = CardFactory.CreateStack(Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position), cSO);
+        Transform topCardTrans = GetTopCard().transform;
+        Collider[] nears = Physics.OverlapBox(topCardTrans.position, Vector3.one * craftingSnapRange, topCardTrans.rotation, 1<<LayerMask.NameToLayer("Card"));
+        
+        // Find nearest stack with top card matching the product
+        float minDistance = int.MaxValue;
+        Stack snapStack = null;
+        foreach (Collider near in nears) {
+            if (near.TryGetComponent(out Card nearCard)) {
+                float d = Vector3.Distance(transform.position, nearCard.transform.position);
+                if (nearCard.mStack != this && nearCard.mStack.GetTopCard() == nearCard &&
+                    nearCard.GetComponent<MoveableCard>().isStackable && nearCard.name == cSO.name && d < minDistance) {
+                    minDistance = d;
+                    snapStack = nearCard.mStack;
+                }
+            }
+        }
+        
+        // Create crafted card object
+        Stack s = CardFactory.CreateStack(topCardTrans.position, cSO);
+        
+        // Move to nearest matching stack or create a new one
+        if (snapStack) {
+            Card newCard = s.GetTopCard();
+            s.PlaceAll(snapStack);
+            StartCoroutine(Utils.MoveCardToPoint(newCard, snapStack.CalculateStackPosition(newCard)));
+            // tends to bug out for recipes that would automatically start crafting (when 2 of something is a recipe)
+        } else {
+            s.transform.position = Utils.GenerateCircleVector(i, total, Constants.CardCreationRadius, transform.position);
+        }
     }
-
-
-
 
     IEnumerator DoCraftTime(float craftTime, Action<int> onCraftFinished) {
         if (craftTime == 0) {

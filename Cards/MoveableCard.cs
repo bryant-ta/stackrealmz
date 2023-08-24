@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Card))]
 public class MoveableCard : MonoBehaviour, IMoveable {
     public bool IsStackable { get => isStackable; set => isStackable = value; }
-    [SerializeField] bool isStackable = true;
+    public bool isStackable = true;
     public List<Transform> nearestSnappableObjs = new List<Transform>();
 
     bool isPickedUp;
@@ -52,7 +52,7 @@ public class MoveableCard : MonoBehaviour, IMoveable {
                         card.GetComponent<MoveableCard>().isStackable && d < minDistance) {
                         snapSlot = null;
                         minDistance = d;
-                        snapCard = card.transform.GetComponent<Card>();
+                        snapCard = card;
                     }
                 } else if (near.TryGetComponent(out Slot slot)) {
                     if (slot.IsEmpty() && d < minDistance) {
@@ -71,7 +71,6 @@ public class MoveableCard : MonoBehaviour, IMoveable {
                 foreach (Card c in movedCards) { // Then move each card individually
                     StartCoroutine(Utils.MoveCardToPoint(c, snapCard.mStack.CalculateStackPosition(c)));
                 }
-
                 return;
             }
 

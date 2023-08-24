@@ -24,6 +24,8 @@ public class CardFactory : MonoBehaviour {
     public static GameObject _foodBase;
     public GameObject animalBase;
     public static GameObject _animalBase;
+    public GameObject spellBase;
+    public static GameObject _spellBase;
     public GameObject cardPackBase;
     public static GameObject _cardPackBase;
     
@@ -74,6 +76,10 @@ public class CardFactory : MonoBehaviour {
             Animal a = Instantiate(_animalBase, pos, alwaysRotate).GetComponent<Animal>();
             a.animalData = aSO;
             s.Place(a);
+        } else if (cSO is SO_Spell sSO) {
+            Spell sp = Instantiate(_spellBase, pos, alwaysRotate).GetComponent<Spell>();
+            sp.spellData = sSO;
+            s.Place(sp);
         } else if (cSO is SO_CardPack cpSO) {
             CardPack cp = Instantiate(_cardPackBase, pos, alwaysRotate).GetComponent<CardPack>();
             cp.cardPackData = cpSO;
@@ -85,6 +91,18 @@ public class CardFactory : MonoBehaviour {
         }
 
         return s;
+    }
+
+    public static Spell CreateBaseSpell(Vector3 pos) {
+        // TODO: remove this and convert all to regular 2D (no rotation) when change is FOR SURE
+        Quaternion alwaysRotate = Quaternion.Euler(90, 0, 0);
+        
+        Stack s = Instantiate(_stackBase, pos, Quaternion.identity).GetComponent<Stack>();
+        
+        Spell sp = Instantiate(_spellBase, pos, alwaysRotate).GetComponent<Spell>();
+        s.Place(sp);
+
+        return sp;
     }
 
     public static Sheet CreateSheet(SO_Sheet sSO) {
