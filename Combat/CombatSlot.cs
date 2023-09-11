@@ -43,7 +43,6 @@ public class CombatSlot : Slot {
         return true;
     }
     
-    // this is fucked
     public override Transform PickUpHeld(bool isPlayerCalled = false, bool endCombatState = false, bool doEventInvoke = true) {
         if (!PickUpCondition(isPlayerCalled)) {
             // Remove Auras Effects

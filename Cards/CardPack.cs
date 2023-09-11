@@ -11,7 +11,7 @@ public class CardPack : Card {
         numCards = cardPackData.numCards;
         dropTable = cardPackData.dropTable;
         
-        EventManager.Subscribe(gameObject, EventID.SecondaryDown, Open);
+        EventManager.Subscribe(gameObject, EventID.CardPickedUp, AllowOpening);
     }
 
     // Open card pack, rolling and creating all card drops at once
@@ -27,4 +27,6 @@ public class CardPack : Card {
         
         Destroy(gameObject);
     }
+    
+    void AllowOpening() { EventManager.Subscribe(gameObject, EventID.SecondaryDown, Open); }
 }

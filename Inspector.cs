@@ -55,7 +55,9 @@ public class Inspector : MonoBehaviour {
             fullCardAttackText.text = a.animalData.atk.ToString();
             fullCardSpeedText.text = a.animalData.spd.ToString();
             fullCardCardText.text = a.animalData.cardText.text;
-        } else { // Show target recipe
+        } else if (targetCard is Spell sp) {
+            bodyText = sp.cardText.text;
+        }else { // Show target recipe
             List<Recipe> targetRecipes = CardFactory.LookupRecipesWithProduct(targetCard.cardData);
             foreach (Recipe r in targetRecipes) {
                 bodyText += "> ";

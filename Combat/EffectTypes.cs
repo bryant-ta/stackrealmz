@@ -104,77 +104,92 @@ public class ModifyMaxHealthEffect : IEffect {
 }
 public class ModifyManaCostEffect : IEffect {
     int modifierTotal;
+    Animal mAnimal;
 
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
-        targetSlot.Animal.manaCost.ChangeModifier(args.val);
+        mAnimal = targetSlot.Animal;
+        
+        mAnimal.manaCost.ChangeModifier(args.val);
         modifierTotal += args.val;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetManaCost, targetSlot.Animal.manaCost.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetManaCost, mAnimal.manaCost.Value);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        targetSlot.Animal.manaCost.ChangeModifier(-modifierTotal);
+        mAnimal.manaCost.ChangeModifier(-modifierTotal);
         modifierTotal = 0;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetManaCost, targetSlot.Animal.manaCost.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetManaCost, mAnimal.manaCost.Value);
     }
 }
 public class ModifyAttackEffect : IEffect {
     int modifierTotal;
+    Animal mAnimal;
 
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
-        targetSlot.Animal.atk.ChangeModifier(args.val);
+        mAnimal = targetSlot.Animal;
+        
+        mAnimal.atk.ChangeModifier(args.val);
         modifierTotal += args.val;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetAttack, targetSlot.Animal.atk.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetAttack, mAnimal.atk.Value);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        targetSlot.Animal.atk.ChangeModifier(-modifierTotal);
+        mAnimal.atk.ChangeModifier(-modifierTotal);
         modifierTotal = 0;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetAttack, targetSlot.Animal.atk.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetAttack, mAnimal.atk.Value);
     }
 }
 public class ModifyBaseAttackEffect : IEffect {
     int modifierTotal;
+    Animal mAnimal;
 
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
-        targetSlot.Animal.atk.ChangeBaseValue(args.val);
+        mAnimal = targetSlot.Animal;
+        
+        mAnimal.atk.ChangeBaseValue(args.val);
         modifierTotal += args.val;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetAttack, targetSlot.Animal.atk.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetAttack, mAnimal.atk.Value);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        targetSlot.Animal.atk.ChangeBaseValue(-modifierTotal);
+        mAnimal.atk.ChangeBaseValue(-modifierTotal);
         modifierTotal = 0;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetAttack, targetSlot.Animal.atk.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetAttack, mAnimal.atk.Value);
     }
 }
 public class ModifySpeedEffect : IEffect {
     int modifierTotal;
+    Animal mAnimal;
 
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
-        targetSlot.Animal.spd.ChangeModifier(args.val);
+        mAnimal = targetSlot.Animal;
+        
+        mAnimal.spd.ChangeModifier(args.val);
         modifierTotal += args.val;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetSpeed, targetSlot.Animal.spd.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetSpeed, mAnimal.spd.Value);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        targetSlot.Animal.spd.ChangeModifier(-modifierTotal);
+        mAnimal.spd.ChangeModifier(-modifierTotal);
         modifierTotal = 0;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetSpeed, targetSlot.Animal.spd.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetSpeed, mAnimal.spd.Value);
     }
 }
 public class ModifyBaseSpeedEffect : IEffect {
     int modifierTotal;
+    Animal mAnimal;
 
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
-        targetSlot.Animal.spd.ChangeBaseValue(args.val);
+        mAnimal = targetSlot.Animal;
+        
+        mAnimal.spd.ChangeBaseValue(args.val);
         modifierTotal += args.val;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetSpeed, targetSlot.Animal.spd.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetSpeed, mAnimal.spd.Value);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        targetSlot.Animal.spd.ChangeBaseValue(-modifierTotal);
+        mAnimal.spd.ChangeBaseValue(-modifierTotal);
         modifierTotal = 0;
-        EventManager.Invoke(targetSlot.Animal.gameObject, EventID.SetSpeed, targetSlot.Animal.spd.Value);
+        EventManager.Invoke(mAnimal.gameObject, EventID.SetSpeed, mAnimal.spd.Value);
     }
 }
 
@@ -196,7 +211,7 @@ public class SpikeyEffect : IEffect {
     Animal mAnimal;
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
         mAnimal = targetSlot.Animal;
-        EventManager.Subscribe<int>(targetSlot.Animal.gameObject, EventID.Damage, Spikey);
+        EventManager.Subscribe<int>(mAnimal.gameObject, EventID.Damage, Spikey);
     }
 
     public void Remove(CombatSlot targetSlot) { }
@@ -205,28 +220,34 @@ public class SpikeyEffect : IEffect {
 }
 
 public class PoisonEffect : IEffect {
+    Animal mAnimal;
+    
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
-        targetSlot.Animal.health.ModifyPoison(args.val);
+        mAnimal = targetSlot.Animal;
+        
+        mAnimal.health.ModifyPoison(args.val);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        targetSlot.Animal.health.ModifyPoison(-targetSlot.Animal.health.poison);
+        mAnimal.health.ModifyPoison(-mAnimal.health.poison);
     }
 }
 
 public class HiddenEffect : IEffect {
     CombatSlot mTargetSlot;
+    Animal mAnimal;
     
     public void Apply(CombatSlot targetSlot, EffectArgs args) {
         mTargetSlot = targetSlot;
+        mAnimal = targetSlot.Animal;
         
-        EventManager.Subscribe<int>(targetSlot.Animal.gameObject, EventID.Damage, DoRemove);
-        EventManager.Subscribe(targetSlot.Animal.gameObject, EventID.Attack, DoRemoveFromAttack);
+        EventManager.Subscribe<int>(mAnimal.gameObject, EventID.Damage, DoRemove);
+        EventManager.Subscribe(mAnimal.gameObject, EventID.Attack, DoRemoveFromAttack);
     }
 
     public void Remove(CombatSlot targetSlot) {
-        Effect e = targetSlot.Animal.EffectCtrl.FindEffect(EffectType.Hidden);
-        targetSlot.Animal.EffectCtrl.tempEffects.Remove(e);
+        Effect e = mAnimal.EffectCtrl.FindEffect(EffectType.Hidden);
+        mAnimal.EffectCtrl.tempEffects.Remove(e);
     }
 
     void DoRemove(int n = 0) {
@@ -302,7 +323,7 @@ public class ConsumeEffect : IEffect {
     public void Apply(CombatSlot targetSlot, EffectArgs args) { // targetSlot is consumer
         // find target
         List<CombatSlot> t = TargetTypes.GetTargets(new TargetArgs() {
-            targetType = TargetType.RandomAdjacent,
+            targetType = TargetType.Adjacent,
             originSlot = targetSlot,
             targetSlotState = TargetSlotState.NonEmpty,
             targetSameTeam = true,

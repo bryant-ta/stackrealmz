@@ -15,7 +15,7 @@
 
      void Start() {
          LoadRealmCards(Realm.Fire, rollTableA);
-         LoadRealmCards(Realm.Earth, rollTableB);
+         // LoadRealmCards(Realm.Earth, rollTableB);
          
          foreach (Slot slot in rollSlotGrid.slotGrid) {
              EventManager.Subscribe<Slot>(slot.gameObject, EventID.SlotPickedUp, CleanUpCards);
@@ -32,11 +32,8 @@
              percentage = 25
          };
          
-         string[] assetPaths = AssetDatabase.FindAssets("t:SO_Animal", new[] { Constants.AnimalDataPath });
-         foreach (string path in assetPaths) {
-             string assetPath = AssetDatabase.GUIDToAssetPath(path);
-             SO_Card card = AssetDatabase.LoadAssetAtPath<SO_Card>(assetPath);
-
+         SO_Card[] cards = Resources.LoadAll<SO_Card>("Animals");
+         foreach (SO_Card card in cards) {
              if (card != null && card.realm == realm) {
                  switch (card.rarity) {
                      case Rarity.Common:

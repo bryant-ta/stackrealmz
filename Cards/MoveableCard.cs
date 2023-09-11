@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Mono.Cecil;
 using UnityEngine;
 
 [RequireComponent(typeof(Card))]
@@ -37,7 +38,8 @@ public class MoveableCard : MonoBehaviour, IMoveable {
             float minDistance = int.MaxValue;
             Card snapCard = null;
             Slot snapSlot = null;
-            foreach (Transform near in nearestSnappableObjs) {
+            for (int i = 0; i < nearestSnappableObjs.Count; i++) {
+                Transform near = nearestSnappableObjs[i];
                 // For keepCard recipes, a nearest card could be destroyed, but ref to it remains in nearestSnappableObjs.
                 // This cleans up those refs... Other solution could be moving object to be destroyed far away to trigger OnTriggerExit?
                 if (near == null) {

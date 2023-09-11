@@ -15,7 +15,6 @@ public class CombatClock : MonoBehaviour {
     void Update() {
         if (timer >= realTimeTickDuration) {
             timer = 0;
-            GameManager.Instance.IncreaseCurTime(realTimeTickDuration);
             onTick.Invoke();
         }
 

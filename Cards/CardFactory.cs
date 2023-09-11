@@ -141,8 +141,6 @@ public class CardFactory : MonoBehaviour {
     }
 
     void LoadRecipes() {
-        string[] assetPaths = AssetDatabase.FindAssets("t:SO_Recipe", new string[] { Constants.RecipeDataPath });
-
         _recipes.Clear();
         
         // Load recipes created in inspector
@@ -151,10 +149,8 @@ public class CardFactory : MonoBehaviour {
         }
         
         // Load recipes from Assets
-        for (int i = 0; i < assetPaths.Length; i++) {
-            string assetPath = AssetDatabase.GUIDToAssetPath(assetPaths[i]);
-            SO_Recipe recipeData = AssetDatabase.LoadAssetAtPath<SO_Recipe>(assetPath);
-
+        SO_Recipe[] recipeDatas = Resources.LoadAll<SO_Recipe>("Recipes");
+        foreach (SO_Recipe recipeData in recipeDatas) {
             Recipe recipe = new Recipe {
                 id = recipeData.id,
                 products = recipeData.products,

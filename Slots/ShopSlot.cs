@@ -11,10 +11,6 @@ public class ShopSlot : Slot
         Restock();
     }
 
-    public override bool PlaceAndMove(Stack stack, bool isPlayerCalled = false) {
-        return false;
-    }
-
     public override Transform PickUpHeld(bool isPlayerCalled = false, bool endCombatState = false, bool doEventInvoke = true) {
         if (GameManager.Instance.Money < price) return null;
         GameManager.Instance.ModifyMoney(-price);

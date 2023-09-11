@@ -92,6 +92,7 @@ public class Animal : Card {
         attackTicker.Stop();
         // abilityTicker.Stop();
         
+        ExecutionManager.Instance.UnregisterEffectOrder(this, cardText.condition);
         EventManager.Invoke(gameObject, EventID.ExitCombat);
     }
 
@@ -112,6 +113,8 @@ public class Animal : Card {
             attackTicker.Start();
             
             EventManager.Invoke(gameObject, EventID.Attack);
+        } else {
+            attackTicker.Start();
         }
     }
 

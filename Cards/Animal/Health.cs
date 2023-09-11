@@ -8,9 +8,11 @@ public class Health : MonoBehaviour {
 
     void Start() {
         if (TryGetComponent(out Animal a)) {
-            SetMaxHp(a.animalData.hp);
+            SetMaxHp(a.animalData.hp, false);
+            SetHp(a.animalData.hp); // bypass ModifyHp events
         } else {
-            SetMaxHp(maxHp);
+            SetMaxHp(maxHp, false);
+            SetHp(maxHp); // bypass ModifyHp events
         }
     }
 
@@ -32,14 +34,12 @@ public class Health : MonoBehaviour {
             newHp = maxHp;
         }
 
-        int delta = newHp - hp;
-        
-        if (value < 0) EventManager.Invoke(gameObject, EventID.Damage, newHp);
-        else if (value > 0) EventManager.Invoke(gameObject, EventID.Heal, newHp);
+        if (value < 0) EventManager.Invoke(gameObject, EventID.Damage, new DeltaArgs {newValue = newHp, deltaValue = value});
+        else if (value > 0) EventManager.Invoke(gameObject, EventID.Heal, new DeltaArgs {newValue = newHp, deltaValue = value});
         
         SetHp(newHp);
 
-        return delta;
+        return newHp - hp;
     }
 
     public void ModifyMaxHp(int value) {
@@ -48,19 +48,20 @@ public class Health : MonoBehaviour {
             newMaxHp = 1;
         }
         
-        SetMaxHp(newMaxHp);
+        SetMaxHp(newMaxHp, true);
     }
     
     public void SetHp(int value) {
+        int delta = hp - value;
         hp = value;
-        
-        EventManager.Invoke(gameObject, EventID.SetHp, value);
+
+        EventManager.Invoke(gameObject, EventID.SetHp, new DeltaArgs {newValue = hp, deltaValue = -delta});
         if (hp <= 0) EventManager.Invoke(gameObject, EventID.Death);    // only invoke Death here
     }
     
-    public void SetMaxHp(int value) {
+    public void SetMaxHp(int value, bool modifyHp) {
         maxHp = value;
-        if (value > 0) {
+        if (modifyHp && value > 0) {
             ModifyHp(value);
         }
 

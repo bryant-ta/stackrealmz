@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,15 +19,17 @@ public class AnimalUI : CardUI {
     public Image attackBarBack;
     public Image abilityBarFill;
     public Image abilityBarBack;
+    
+    public GameObject valueDeltaAnim;
 
     void Awake() {
         EventManager.Subscribe<int>(gameObject, EventID.SetManaCost, UpdateManaCostText);
         EventManager.Subscribe(gameObject, EventID.ExitCombat, ShowManaCostText);
         EventManager.Subscribe(gameObject, EventID.EnterCombat, HideManaCostText);
         
-        EventManager.Subscribe<int>(gameObject, EventID.Heal, UpdateHpText);
-        EventManager.Subscribe<int>(gameObject, EventID.Damage, UpdateHpText);
-        EventManager.Subscribe<int>(gameObject, EventID.SetHp, UpdateHpText);
+        EventManager.Subscribe<DeltaArgs>(gameObject, EventID.Heal, UpdateHpText);
+        EventManager.Subscribe<DeltaArgs>(gameObject, EventID.Damage, UpdateHpText);
+        EventManager.Subscribe<int>(gameObject, EventID.SetHp, SetHpText);
         EventManager.Subscribe<int>(gameObject, EventID.SetArmor, UpdateArmorText);
         EventManager.Subscribe<int>(gameObject, EventID.SetPoison, UpdatePoisonText);
         
@@ -36,9 +39,9 @@ public class AnimalUI : CardUI {
         EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowAttackBar);
         EventManager.Subscribe(gameObject, EventID.ExitCombat, HideAttackBar);
 
-        EventManager.Subscribe<CombatTickerArgs>(gameObject, EventID.AbilityTick, UpdateAbilityBar);
-        EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowAbilityBar);
-        EventManager.Subscribe(gameObject, EventID.ExitCombat, HideAbilityBar);
+        // EventManager.Subscribe<CombatTickerArgs>(gameObject, EventID.AbilityTick, UpdateAbilityBar);
+        // EventManager.Subscribe(gameObject, EventID.EnterCombat, ShowAbilityBar);
+        // EventManager.Subscribe(gameObject, EventID.ExitCombat, HideAbilityBar);
     }
 
     new void Start() {
@@ -58,7 +61,16 @@ public class AnimalUI : CardUI {
     
     /*******************   Health   *******************/
     
-    void UpdateHpText(int val) {
+    void UpdateHpText(DeltaArgs args) {
+        hpText.text = args.newValue.ToString();
+        
+        if (args.deltaValue < 0) {
+            StartCoroutine(Fade(hurtFlashColor));
+        } else {
+            StartCoroutine(Fade(healFlashColor));
+        }
+    }
+    void SetHpText(int val) {
         hpText.text = val.ToString();
     }
     void UpdateArmorText(int val) {
@@ -91,4 +103,45 @@ public class AnimalUI : CardUI {
     }
     void ShowAbilityBar() { abilityBarBack.gameObject.SetActive(true);}
     void HideAbilityBar() { abilityBarBack.gameObject.SetActive(false);}
+    
+    /*******************   Animation   *******************/
+
+    [SerializeField] float flashFadeDuration = 0.5f;
+    [SerializeField] Color hurtFlashColor;
+    [SerializeField] Color healFlashColor;
+    bool isFading = false;
+    IEnumerator Fade(Color flashColor) {
+        if (isFading) yield break;
+        
+        isFading = true;
+        float elapsedTime = 0.0f;
+        Color startColor = cardArt.color;
+
+        for (int i = 0; i < 2; i++) {
+            while (elapsedTime < flashFadeDuration) {
+                elapsedTime += Time.deltaTime;
+
+                Color newColor = Color.Lerp(startColor, flashColor, elapsedTime / flashFadeDuration);
+                cardArt.color = newColor;
+
+                yield return null;
+            }
+
+            elapsedTime = 0.0f;
+
+            while (elapsedTime < flashFadeDuration) {
+                elapsedTime += Time.deltaTime;
+
+                Color newColor = Color.Lerp(flashColor, startColor, elapsedTime / flashFadeDuration);
+                cardArt.color = newColor;
+
+                yield return null;
+            }
+            
+            elapsedTime = 0.0f;
+        }
+
+        cardArt.color = startColor;
+        isFading = false;
+    }
 }

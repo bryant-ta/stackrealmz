@@ -11,7 +11,6 @@ public class WaveManager : MonoBehaviour {
     static WaveManager _instance;
 
     public List<SO_Battle> battleDatas;
-    public static List<SO_Battle> _battleDatas = new List<SO_Battle>();
 
     public int curWaveNum;
     public Battle battle;
@@ -19,6 +18,7 @@ public class WaveManager : MonoBehaviour {
     [SerializeField] List<CombatSlot> spawnSlots = new List<CombatSlot>();
     Queue<SO_Animal> spawnQueue = new Queue<SO_Animal>();
     [SerializeField] List<CombatSlot> playSlots = new List<CombatSlot>();
+    [SerializeField] Slot spellSlot;
 
     CombatTicker waveTicker;
 
@@ -42,36 +42,12 @@ public class WaveManager : MonoBehaviour {
         EventManager.Subscribe(GameManager.Instance.gameObject, EventID.Death, LostBattle);
         
         EventManager.Subscribe(GameManager.Instance.gameObject, EventID.EndDay, StartBattle);
-        
-        LoadBattles();
-        
-        // Debug
-        // StartBattle();
-    }
-    
-    void LoadBattles() {
-        string[] assetPaths = AssetDatabase.FindAssets($"t:{typeof(SO_Battle).Name}", new string[] { Constants.BattlesDataPath });
-
-        _battleDatas.Clear();
-        
-        // Load inspector created assets
-        foreach (SO_Battle battleData in battleDatas) {
-            _battleDatas.Add(battleData);
-        }
-        
-        // Load file Assets
-        for (int i = 0; i < assetPaths.Length; i++) {
-            string assetPath = AssetDatabase.GUIDToAssetPath(assetPaths[i]);
-            SO_Battle battleData = AssetDatabase.LoadAssetAtPath<SO_Battle>(assetPath);
-
-            _battleDatas.Add(battleData);
-        }
     }
 
     public void StartBattle() {
         // Load battle data for current day
-        if (GameManager.Instance.day <= _battleDatas.Count) {
-            battle.waves = _battleDatas[GameManager.Instance.day - 1].waves;
+        if (GameManager.Instance.day <= battleDatas.Count) {
+            battle.waves = battleDatas[GameManager.Instance.day - 1].waves;
         } else {
             Debug.Log("You Win!?");
             return;
@@ -81,6 +57,7 @@ public class WaveManager : MonoBehaviour {
         foreach (CombatSlot slot in playSlots) {
             slot.canPlace = true;
         }
+        spellSlot.canPickUp = false;
 
         EventManager.Invoke(gameObject, EventID.StartBattle);
 
@@ -93,6 +70,8 @@ public class WaveManager : MonoBehaviour {
         
         CleanUp();
         EventManager.Invoke(gameObject, EventID.WonBattle);
+        
+        if (GameManager.Instance.day == battleDatas.Count - 1) GameManager.Instance.WonGame();
     }
     public void LostBattle() {
         CleanUp();
@@ -103,6 +82,7 @@ public class WaveManager : MonoBehaviour {
         foreach (CombatSlot slot in playSlots) {
             slot.canPlace = false;
         }
+        spellSlot.canPickUp = true;
 
         battle.waves = null;
         curWaveNum = 0;

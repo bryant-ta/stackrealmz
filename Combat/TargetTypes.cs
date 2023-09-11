@@ -100,12 +100,18 @@ public static class TargetTypes {
             }
             case TargetType.Random: {
                 List<CombatSlot> selectableSlots = SelectTargetsOfTeam(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny, args.targetGroup);
-                targets.Add(selectableSlots[Random.Range(0, selectableSlots.Count)]);
+                if (selectableSlots.Count > 0) {
+                    targets.Add(selectableSlots[Random.Range(0, selectableSlots.Count)]);
+                }
+
                 return targets;
             }
             case TargetType.RandomAdjacent: {
                 List<CombatSlot> selectableSlots = SelectTargetsAdjacent(combatGrid, args.originSlot, args.targetSameTeam, targetEmpty, targetAny);
-                targets.Add(selectableSlots[Random.Range(0, selectableSlots.Count)]);
+                if (selectableSlots.Count > 0) {
+                    targets.Add(selectableSlots[Random.Range(0, selectableSlots.Count)]);
+                }
+
                 return targets;
             }
             case TargetType.Select: // only used by player (Spells)
@@ -119,7 +125,7 @@ public static class TargetTypes {
                 CombatSlot focus = SelectStandard(combatGrid, args.originSlot);
                 if (focus) {
                     for (int y = -1; y <= 1; y++) {
-                        targetSlot = combatGrid.SelectSlotRelative(focus, false, new Vector2Int(focus.x, y)) as CombatSlot;
+                        targetSlot = combatGrid.SelectSlotRelative(focus, false, new Vector2Int(0, y)) as CombatSlot;
                         if (targetSlot && !targetSlot.IsEmpty()) targets.Add(targetSlot);
                     }
                 }
@@ -168,7 +174,7 @@ public static class TargetTypes {
         List<CombatSlot> targets = new List<CombatSlot>();
         foreach (CombatSlot targetSlot in combatGrid.slotGrid) {
             if (CheckTargetArgs(targetSlot, originSlot, targetEmpty, targetAny, targetSameTeam) &&
-                ((targetGroup == Group.None) || targetSlot.Animal.group == targetGroup)) {
+                ((targetGroup == Group.None) || (targetSlot.Animal && targetSlot.Animal.group == targetGroup))) {
                 targets.Add(targetSlot);
             }
         }

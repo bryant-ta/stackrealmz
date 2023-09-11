@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 // GameManager singleton handles day cycle
 // Load Order: priority in script load order (otherwise _instance might not be set when used)
@@ -54,20 +55,17 @@ public class GameManager : MonoBehaviour {
     }
 
     void Start() {
-        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EnableManaGen);
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.StartBattle, EndDay);
-        
-        EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, DisableManaGen);
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.WonBattle, EndNight);
-        
         EventManager.Subscribe(WaveManager.Instance.gameObject, EventID.LostBattle, LostGame);
         
-        
         StartCoroutine(GameLoop());
+        
+        EnableManaGen();
 
         // Debug
-        ModifyMoney(10);
-        ModifyMana(5);
+        ModifyMoney(25);
+        ModifyMana(10);
     }
 
     IEnumerator GameLoop() {
@@ -91,18 +89,6 @@ public class GameManager : MonoBehaviour {
         UIManager.Instance.UpdateTimeProgressBar(curTime / duration);
         
         EventManager.Invoke(gameObject, endEvent);
-        
-        // if (doEating) {
-        //     foreach (Animal v in animals) {
-        //         if (foods.Count == 0) {
-        //             // TODO: You lost function
-        //             print("YOU LOST");
-        //             break;
-        //         }
-        //
-        //         // foods[0].Eat();
-        //     }
-        // }
     }
     void EndDay() {
         curTime = dayDuration;
@@ -113,13 +99,16 @@ public class GameManager : MonoBehaviour {
 
     public void IncreaseCurTime(float n) { curTime += n; }
 
-    void WonGame() {
-        
+    public void WonGame() {
+        EventManager.Invoke(gameObject, EventID.WonGame);
     }
     
     void LostGame() {
-        print("YOU LOST THE GAME");
         EventManager.Invoke(gameObject, EventID.LostGame);
+    }
+
+    public void RestartGame() {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
     }
     
     // Usage in inspector by time buttons
@@ -164,7 +153,7 @@ public class GameManager : MonoBehaviour {
     }
 
     /**********************   Money Funcs   *********************/
-    
+
     public bool ModifyMoney(int value) {
         int newMoney = _money + value;
         if (newMoney < 0) {
@@ -172,8 +161,8 @@ public class GameManager : MonoBehaviour {
         }
 
         _money = newMoney;
-        EventManager.Invoke(gameObject, EventID.ModifyMoney, _money);
-        
+        EventManager.Invoke(gameObject, EventID.ModifyMoney, new DeltaArgs {newValue = _money, deltaValue = value});
+
         return true;
     }
 }

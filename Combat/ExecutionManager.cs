@@ -38,6 +38,9 @@ public class ExecutionManager : MonoBehaviour {
     public void RegisterEffectOrder(Animal origin, EventID condition) {
         EventManager.Subscribe<EffectOrder>(origin.gameObject, condition, QueueEffectOrder);
     }
+    public void UnregisterEffectOrder(Animal origin, EventID condition) {
+        EventManager.Unsubscribe<EffectOrder>(origin.gameObject, condition, QueueEffectOrder);
+    }
 
     public void QueueAttackOrder(AttackOrder ao) { attackOrders.Add(ao); }
     public void QueueEffectOrder(EffectOrder effectOrder) { effectOrders.Add(effectOrder); }
@@ -60,7 +63,7 @@ public class ExecutionManager : MonoBehaviour {
             }
             ao.animal.Attack();
 
-            yield return new WaitForSeconds(0.25f);
+            // yield return new WaitForSeconds(0.5f);
         }
         
         attackOrders.Clear();
@@ -79,7 +82,10 @@ public class ExecutionManager : MonoBehaviour {
     }
 
     void TriggerEffectOrders() {
-        foreach (EffectOrder eo in effectOrders) {
+        List<EffectOrder> curEffectOrders = effectOrders.ToList();
+        effectOrders.Clear();
+        
+        foreach (EffectOrder eo in curEffectOrders) {
             // Get targets
             List<CombatSlot> targetSlots = new List<CombatSlot>();
             TargetArgs targetArgs = new TargetArgs() {
@@ -117,8 +123,6 @@ public class ExecutionManager : MonoBehaviour {
                 }
             }
         }
-
-        effectOrders.Clear();
     }
 
     // ExecuteDurationEffects handles executing duration effects on cards in play.
